@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            args: ''
+          - platform: windows-latest
+            args: ''
+          - platform: macos-latest
+            args: '--target aarch64-apple-darwin'
+          - platform: macos-latest
+            args: '--target x86_64-apple-darwin'
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'HisabDesk ${{ github.ref_name }}'
+          releaseBody: |
+            ## HisabDesk ${{ github.ref_name }}
+
+            **Accounting & Consulting Management System**
+            Remote Accounting and Consulting Pvt. Ltd.
+
+            ### Downloads
+
+            | Platform | File |
+            |----------|------|
+            | Windows | `.msi` installer or `.exe` setup |
+            | Linux | `.deb`, `.rpm`, or `.AppImage` |
+            | macOS (Intel) | `.dmg` (x86_64) |
+            | macOS (Apple Silicon) | `.dmg` (aarch64) |
+
+            ### Installation
+
+            **Windows:** Download the `.msi` file → double-click → follow the wizard.
+            **Linux:** `sudo dpkg -i HisabDesk_*.deb` (Debian/Ubuntu) or run the `.AppImage` directly.
+            **macOS:** Open the `.dmg` → drag HisabDesk to Applications.
+
+            ### First Launch
+
+            The database initializes automatically with all 753 Nepal local levels, 77 districts, and 7 provinces pre-loaded.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}

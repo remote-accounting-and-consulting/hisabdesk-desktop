@@ -1,0 +1,44 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "HisabDesk",
+  "version": "1.0.0",
+  "identifier": "com.remoteaccounting.hisabdesk",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "HisabDesk - Accounting & Consulting Management",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 700,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true
+      }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "publisher": "Remote Accounting and Consulting Pvt. Ltd.",
+    "copyright": "© 2082 Remote Accounting and Consulting Pvt. Ltd.",
+    "category": "Business",
+    "shortDescription": "Accounting Consulting Practice Management System",
+    "longDescription": "Complete practice management for accounting firms in Nepal.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": { "sql": { "preload": ["sqlite:hisabdesk.db"] } }
+}
