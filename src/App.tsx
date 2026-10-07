@@ -24,6 +24,10 @@ import Reports from "@/pages/Reports";
 import Notifications from "@/pages/Notifications";
 import { initializeDatabase } from "@/lib/db";
 import { recalculateDueDates } from "@/lib/dueDate";
+import {
+  scanAndCreateNotifications,
+  cleanupOldNotifications,
+} from "@/lib/notifications";
 
 function App() {
   const [ready, setReady] = useState(false);
@@ -32,24 +36,34 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
     (async () => {
       try {
-        // Minimum splash display time (so it doesn't flash)
         const minSplash = new Promise((r) => setTimeout(r, 800));
 
         await initializeDatabase();
         await recalculateDueDates();
+        await cleanupOldNotifications();
+        await scanAndCreateNotifications();
         await minSplash;
 
         setReady(true);
-
-        // Trigger fade-out
         setFadingOut(true);
         setTimeout(() => setShowSplash(false), 400);
+
+        // Re-scan every 15 minutes while app is open
+        interval = setInterval(() => {
+          scanAndCreateNotifications().catch(console.error);
+        }, 15 * 60 * 1000);
       } catch (err) {
         setError(String(err));
       }
     })();
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, []);
 
   if (error) {

@@ -12,7 +12,11 @@ export default function VAT() {
   useEffect(() => {
     (async () => {
       const db = await getDb();
-      const cs = await db.select<any[]>(`SELECT DISTINCT c.id, c.name FROM clients c WHERE c.category = 'regular' AND c.active = 1 ORDER BY c.name`);
+      const cs = await db.select<any[]>(
+        `SELECT DISTINCT c.id, c.name FROM clients c
+         WHERE c.category = 'regular' AND c.active = 1
+         ORDER BY c.name`
+      );
       setClients(cs);
       if (cs.length > 0) setSelected(cs[0].id);
     })();
@@ -26,16 +30,27 @@ export default function VAT() {
 
   async function loadTracking() {
     const db = await getDb();
-    const existing = await db.select<any[]>("SELECT * FROM vat_tracking WHERE client_id = ? AND fiscal_year = ? ORDER BY month_index", [selected, fiscalYear]);
+    const existing = await db.select<any[]>(
+      "SELECT * FROM vat_tracking WHERE client_id = ? AND fiscal_year = ? ORDER BY month_index",
+      [selected, fiscalYear]
+    );
+
     if (existing.length === 0) {
       for (let i = 0; i < 12; i++) {
         await db.execute(
-          `INSERT OR IGNORE INTO vat_tracking (client_id, fiscal_year, month_index, month_name, status) VALUES (?, ?, ?, ?, 'pending')`,
+          `INSERT OR IGNORE INTO vat_tracking
+             (client_id, fiscal_year, month_index, month_name, status)
+           VALUES (?, ?, ?, ?, 'pending')`,
           [selected, fiscalYear, i + 1, NEPALI_MONTHS[i]]
         );
       }
-      setRows(await db.select<any[]>("SELECT * FROM vat_tracking WHERE client_id = ? AND fiscal_year = ? ORDER BY month_index", [selected, fiscalYear]));
-    } else setRows(existing);
+      setRows(await db.select<any[]>(
+        "SELECT * FROM vat_tracking WHERE client_id = ? AND fiscal_year = ? ORDER BY month_index",
+        [selected, fiscalYear]
+      ));
+    } else {
+      setRows(existing);
+    }
   }
 
   async function loadByStatus(statuses: string[]) {
@@ -67,9 +82,13 @@ export default function VAT() {
           <p className="text-sm text-gray-500">Monthly VAT filing status</p>
         </div>
         <select value={fiscalYear} onChange={(e) => setFiscalYear(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
-          <option>2081/82</option><option>2082/83</option><option>2083/84</option><option>2084/85</option>
+          <option>2081/82</option>
+          <option>2082/83</option>
+          <option>2083/84</option>
+          <option>2084/85</option>
         </select>
       </div>
+
       <div className="flex bg-white border border-gray-200 rounded-lg p-1 w-fit">
         {(["monthly", "pending", "filed"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 text-sm rounded-md font-medium capitalize ${tab === t ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}>
@@ -96,8 +115,10 @@ export default function VAT() {
                     {r.status === "filed" && <span className="text-emerald-600 text-sm">✓</span>}
                   </div>
                   <select value={r.status} onChange={(e) => updateStatus(r.id, e.target.value)} className="w-full text-xs border border-gray-200 rounded px-1 py-1 bg-white">
-                    <option value="pending">Pending</option><option value="submitted">Submitted</option>
-                    <option value="filed">Filed</option><option value="late">Late</option>
+                    <option value="pending">Pending</option>
+                    <option value="submitted">Submitted</option>
+                    <option value="filed">Filed</option>
+                    <option value="late">Late</option>
                   </select>
                   {r.filed_date && <div className="text-[10px] text-gray-500 mt-1">Filed: {r.filed_date}</div>}
                 </div>

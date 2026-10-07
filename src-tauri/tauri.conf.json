@@ -22,13 +22,15 @@
         "center": true
       }
     ],
-    "security": { "csp": null }
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,
     "targets": "all",
     "publisher": "Remote Accounting and Consulting Pvt. Ltd.",
-    "copyright": "© 2082 Remote Accounting and Consulting Pvt. Ltd.",
+    "copyright": "\u00a9 2082 Remote Accounting and Consulting Pvt. Ltd.",
     "category": "Business",
     "shortDescription": "Accounting Consulting Practice Management System",
     "longDescription": "Complete practice management for accounting firms in Nepal.",
@@ -40,5 +42,11 @@
       "icons/icon.ico"
     ]
   },
-  "plugins": { "sql": { "preload": ["sqlite:hisabdesk.db"] } }
+  "plugins": {
+    "sql": {
+      "preload": [
+        "sqlite:hisabdesk.db"
+      ]
+    }
+  }
 }

@@ -38,53 +38,87 @@ jobs:
         shell: bash
         run: |
           if [ ! -f src-tauri/icons/32x32.png ]; then
-            echo "⚠️  No icons found — generating placeholder"
+            echo "No icons found - generating placeholder"
             curl -L -o app-icon.png "https://placehold.co/1024x1024/2563eb/ffffff.png?text=HD"
             npx tauri icon ./app-icon.png
           else
-            echo "✅ Icons already present"
+            echo "Icons already present"
           fi
 
-      - name: Build Windows app
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Tauri app
+        run: npm run tauri build
+
+      - name: Rename installers to fixed names
+        shell: pwsh
+        run: |
+          $msi = Get-ChildItem -Path "src-tauri/target/release/bundle/msi/*.msi" | Select-Object -First 1
+          if ($msi) {
+            Copy-Item $msi.FullName "src-tauri/target/release/bundle/msi/HisabDesk-Setup.msi"
+            Write-Host "Copied $($msi.Name) -> HisabDesk-Setup.msi"
+          } else {
+            Write-Host "No MSI found"
+            exit 1
+          }
+
+          $exe = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis/*.exe" | Select-Object -First 1
+          if ($exe) {
+            Copy-Item $exe.FullName "src-tauri/target/release/bundle/nsis/HisabDesk-Setup.exe"
+            Write-Host "Copied $($exe.Name) -> HisabDesk-Setup.exe"
+          }
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'HisabDesk ${{ github.ref_name }}'
-          releaseBody: |
+          name: 'HisabDesk ${{ github.ref_name }}'
+          body: |
             ## HisabDesk ${{ github.ref_name }}
 
             Accounting Consulting Practice Management System
             For **Remote Accounting and Consulting Pvt. Ltd.**
 
-            ### Windows Downloads
+            ### Download
 
-            | File | Description |
-            |------|-------------|
-            | `HisabDesk_*_x64_en-US.msi` | Installer (recommended) |
-            | `HisabDesk_*_x64-setup.exe` | NSIS installer (alternative) |
+            **[Download HisabDesk-Setup.msi](https://github.com/remote-accounting-and-consulting/hisabdesk-desktop/releases/latest/download/HisabDesk-Setup.msi)**
+
+            Permanent link (always latest):
+            `https://github.com/remote-accounting-and-consulting/hisabdesk-desktop/releases/latest/download/HisabDesk-Setup.msi`
 
             ### Install
 
-            1. Download the `.msi` file
+            1. Download `HisabDesk-Setup.msi`
             2. Double-click to install
-            3. Launch **HisabDesk** from the Start menu
+            3. Launch from Start menu
 
-            No admin rights needed. WebView2 runtime installs automatically.
+            No admin rights needed. WebView2 installs automatically.
 
             ### Data Location
 
             `%APPDATA%\com.remoteaccounting.hisabdesk\hisabdesk.db`
-          releaseDraft: false
+
+            ### Features
+
+            - Client registration (Nepal Province -> District -> Local Level -> Ward)
+            - Document collection with file upload
+            - VAT 12-month tracking (Nepali fiscal year)
+            - Work assignment Kanban board
+            - Fee invoicing and payment tracking
+            - Staff workload management
+            - Multi-tier reports
+            - OS-level deadline notifications
+          files: |
+            src-tauri/target/release/bundle/msi/HisabDesk-Setup.msi
+            src-tauri/target/release/bundle/nsis/HisabDesk-Setup.exe
+          draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload backup artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: HisabDesk-Windows
+          name: HisabDesk-Windows-Backup
           path: |
-            src-tauri/target/release/bundle/msi/*.msi
-            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/HisabDesk-Setup.msi
+            src-tauri/target/release/bundle/nsis/HisabDesk-Setup.exe
           if-no-files-found: warn
