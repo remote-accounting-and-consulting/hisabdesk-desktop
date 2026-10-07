@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "HisabDesk - Accounting & Consulting Management",
+        "title": "HisabDesk",
         "width": 1400,
         "height": 900,
         "minWidth": 1024,
@@ -32,8 +32,8 @@
     "publisher": "Remote Accounting and Consulting Pvt. Ltd.",
     "copyright": "\u00a9 2082 Remote Accounting and Consulting Pvt. Ltd.",
     "category": "Business",
-    "shortDescription": "Accounting Consulting Practice Management System",
-    "longDescription": "Complete practice management for accounting firms in Nepal.",
+    "shortDescription": "Accounting & Consulting Practice Management System",
+    "longDescription": "HisabDesk is a desktop practice management system built for accounting and consulting firms in Nepal. It provides a simple and organized way to manage clients, practice activities, and day-to-day workflows in one place.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

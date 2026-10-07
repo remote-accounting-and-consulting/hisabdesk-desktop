@@ -29,7 +29,7 @@ export default function Sidebar() {
           <div className="font-semibold text-gray-900 text-lg leading-tight">
             HisabDesk
           </div>
-          <div className="text-sm text-gray-500 leading-tight">
+          <div className="text-xs text-gray-500 leading-tight">
             Accounting & Consulting
           </div>
         </div>
@@ -57,7 +57,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-gray-200">
-        <div className="text-sm text-gray-500 px-3">
+        <div className="text-[10px] text-gray-500 px-3">
           © 2082 Remote Accounting and Consulting Pvt. Ltd.
         </div>
       </div>

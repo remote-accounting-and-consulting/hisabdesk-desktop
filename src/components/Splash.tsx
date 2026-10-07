@@ -14,7 +14,7 @@ export default function Splash() {
 
         {/* Tagline */}
         <p className="text-brand-100 text-sm mt-2">
-          Accounting & Consulting Management
+          Accounting & Consulting Practice Management System
         </p>
 
         {/* Spinner */}
