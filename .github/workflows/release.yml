@@ -56,8 +56,9 @@ jobs:
         with:
           name: 'HisabDesk ${{ github.ref_name }}'
           body: |
-            **Accounting Consulting Practice Management System**
-            From Remote Accounting and Consulting Pvt. Ltd.
+            ### HisabDesk
+            
+            Accounting & Consulting Practice Management System
 
             ### Installation (for Windows)
 
