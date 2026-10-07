@@ -31,7 +31,10 @@ async function ensureFolder(path: string): Promise<void> {
 export async function pickAndAttachFile(clientId: number, clientCode: string, docTypeId: number, docTypeName: string) {
   const source = await open({ multiple: false, directory: false });
   if (!source) return null;
-  const sourcePath = typeof source === "string" ? source : source.path;
+  const sourcePath: string =
+    typeof source === "string"
+      ? source
+      : (source as any)?.path ?? String(source);
   if (!sourcePath) return null;
   const root = await getFilesRoot();
   const targetDir = `${root}/${sanitize(clientCode)}/${sanitize(docTypeName)}`;
