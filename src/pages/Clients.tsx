@@ -2,36 +2,39 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Search, Trash2 } from "lucide-react";
 import { getDb, logAudit } from "@/lib/db";
-import { deleteClient } from "@/lib/delete";
+import { hardDeleteClient } from "@/lib/delete";
 import { cn } from "@/lib/utils";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default function Clients() {
   const [clients, setClients] = useState<any[]>([]);
   const [filter, setFilter] = useState<"all" | "regular" | "one_time">("all");
   const [search, setSearch] = useState("");
-  const [showArchived, setShowArchived] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ open: false, title: "", message: "", onConfirm: () => {} });
 
   useEffect(() => {
     load();
-  }, [filter, showArchived]);
+  }, [filter]);
 
   async function load() {
     const db = await getDb();
     let q = `
       SELECT c.id, c.client_code, c.name, c.pan_no, c.category, c.contact_number,
-             c.active,
              rt.name as registration_type, bc.name as business_category,
              d.name as district
       FROM clients c
       LEFT JOIN registration_types rt ON rt.id = c.registration_type_id
       LEFT JOIN business_categories bc ON bc.id = c.business_category_id
       LEFT JOIN districts d ON d.id = c.district_id
-      WHERE 1=1
+      WHERE c.active = 1
     `;
     const params: any[] = [];
-    if (!showArchived) {
-      q += " AND c.active = 1";
-    }
     if (filter !== "all") {
       q += " AND c.category = ?";
       params.push(filter);
@@ -41,50 +44,71 @@ export default function Clients() {
   }
 
   async function handleDelete(c: any) {
-    if (
-      !confirm(
-        `Delete "${c.name}" (${c.client_code})?\n\nThis cannot be undone.`
-      )
-    )
-      return;
-
-    let result = await deleteClient(c.id, false);
-
-    if (!result.ok) {
-      const force = confirm(
-        result.message + "\n\nForce delete anyway?\n" +
-        "(All related work, invoices, payments, docs, files will be removed)"
-      );
-      if (!force) return;
-
-      if (
-        !confirm(
-          `⚠️  FINAL CONFIRMATION\n\n` +
-          `You are about to permanently delete ${c.name} and ALL related data.\n` +
-          `Type OK by clicking Yes to proceed.`
-        )
-      )
-        return;
-
-      result = await deleteClient(c.id, true);
-    }
-
-    if (!result.ok) {
-      alert(result.message);
-      return;
-    }
-
-    await logAudit("delete_client", "client", c.id, { name: c.name });
-    load();
-  }
-
-  async function toggleActive(c: any) {
     const db = await getDb();
-    await db.execute("UPDATE clients SET active = ? WHERE id = ?", [
-      c.active ? 0 : 1,
-      c.id,
-    ]);
-    load();
+    const [stats] = await db.select<any[]>(
+      `SELECT
+         (SELECT COUNT(*) FROM work_assignments WHERE client_id = ?) as work,
+         (SELECT COUNT(*) FROM invoices WHERE client_id = ?) as invoices,
+         (SELECT COUNT(*) FROM payments WHERE client_id = ?) as payments,
+         (SELECT COUNT(*) FROM vat_tracking WHERE client_id = ?) as vat,
+         (SELECT COUNT(*) FROM client_services WHERE client_id = ?) as services,
+         (SELECT COUNT(*) FROM client_documents WHERE client_id = ?) as docs,
+         (SELECT COUNT(*) FROM client_document_files WHERE client_id = ?) as files`,
+      [c.id, c.id, c.id, c.id, c.id, c.id, c.id]
+    );
+
+    const total =
+      (stats?.work || 0) +
+      (stats?.invoices || 0) +
+      (stats?.payments || 0) +
+      (stats?.vat || 0) +
+      (stats?.services || 0) +
+      (stats?.docs || 0) +
+      (stats?.files || 0);
+
+    let message: string;
+    if (total === 0) {
+      message = `Delete "${c.name}" (${c.client_code})?`;
+    } else {
+      const lines: string[] = [];
+      if (stats.work > 0) lines.push(`  • ${stats.work} work assignment(s)`);
+      if (stats.invoices > 0) lines.push(`  • ${stats.invoices} invoice(s)`);
+      if (stats.payments > 0) lines.push(`  • ${stats.payments} payment(s)`);
+      if (stats.vat > 0) lines.push(`  • ${stats.vat} VAT row(s)`);
+      if (stats.services > 0) lines.push(`  • ${stats.services} service(s)`);
+      if (stats.docs > 0) lines.push(`  • ${stats.docs} document row(s)`);
+      if (stats.files > 0) lines.push(`  • ${stats.files} file(s) on disk`);
+
+      message =
+        `This client has related data:\n\n` +
+        lines.join("\n") +
+        `\n\nDelete "${c.name}" and ALL this data permanently?\n\n` +
+        `This cannot be undone.`;
+    }
+
+    setConfirmState({
+      open: true,
+      title: total === 0 ? "Delete Client" : "Delete Client and All Data",
+      message,
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, open: false }));
+        setDeleting(c.id);
+        try {
+          const result = await hardDeleteClient(c.id);
+          if (!result.ok) {
+            alert("Delete failed: " + result.message);
+            return;
+          }
+          await logAudit("delete_client", "client", c.id, {
+            name: c.name,
+            stats: result.stats,
+          });
+          load();
+        } finally {
+          setDeleting(null);
+        }
+      },
+    });
   }
 
   const filtered = clients.filter(
@@ -129,15 +153,6 @@ export default function Clients() {
           ))}
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showArchived}
-            onChange={(e) => setShowArchived(e.target.checked)}
-          />
-          Show archived
-        </label>
-
         <div className="relative flex-1 max-w-md">
           <Search
             size={16}
@@ -173,10 +188,7 @@ export default function Clients() {
               </tr>
             )}
             {filtered.map((c) => (
-              <tr
-                key={c.id}
-                className={`hover:bg-gray-50 ${!c.active ? "opacity-50" : ""}`}
-              >
+              <tr key={c.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-mono text-xs text-gray-500">
                   {c.client_code}
                 </td>
@@ -187,11 +199,6 @@ export default function Clients() {
                   >
                     {c.name}
                   </Link>
-                  {!c.active && (
-                    <span className="ml-2 text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
-                      Archived
-                    </span>
-                  )}
                 </td>
                 <td className="px-4 py-3 text-gray-700">{c.pan_no || "—"}</td>
                 <td className="px-4 py-3 text-gray-700">{c.district || "—"}</td>
@@ -215,16 +222,12 @@ export default function Clients() {
                     Edit
                   </Link>
                   <button
-                    onClick={() => toggleActive(c)}
-                    className="text-xs text-gray-600 hover:text-gray-800 font-medium"
-                  >
-                    {c.active ? "Archive" : "Restore"}
-                  </button>
-                  <button
                     onClick={() => handleDelete(c)}
-                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 font-medium"
+                    disabled={deleting === c.id}
+                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
                   >
-                    <Trash2 size={12} /> Delete
+                    <Trash2 size={12} />
+                    {deleting === c.id ? "Deleting..." : "Delete"}
                   </button>
                 </td>
               </tr>
@@ -232,6 +235,16 @@ export default function Clients() {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmLabel="Delete"
+        danger
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+      />
     </div>
   );
 }

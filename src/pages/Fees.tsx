@@ -1,47 +1,118 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Wallet, FileText } from "lucide-react";
-import { getDb } from "@/lib/db";
+import { Plus, Wallet, FileText, Trash2 } from "lucide-react";
+import { getDb, logAudit } from "@/lib/db";
 import { formatCurrency, daysOutstanding } from "@/lib/utils";
+import { hardDeleteInvoice } from "@/lib/delete";
 import StatusBadge from "@/components/StatusBadge";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default function Fees() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [filter, setFilter] = useState<"all" | "unpaid" | "partial" | "paid">("all");
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ open: false, title: "", message: "", onConfirm: () => {} });
 
-  useEffect(() => { load(); }, [filter]);
+  useEffect(() => {
+    load();
+  }, [filter]);
 
   async function load() {
     const db = await getDb();
-    let q = `SELECT i.*, c.name as client_name, s.name as service_name FROM invoices i JOIN clients c ON c.id = i.client_id LEFT JOIN services s ON s.id = i.service_id WHERE i.status != 'cancelled'`;
+    let q = `
+      SELECT i.*, c.name as client_name, s.name as service_name,
+        (SELECT COUNT(*) FROM payments WHERE invoice_id = i.id) as payment_count
+      FROM invoices i
+      JOIN clients c ON c.id = i.client_id
+      LEFT JOIN services s ON s.id = i.service_id
+      WHERE i.status != 'cancelled'
+    `;
     const p: any[] = [];
-    if (filter !== "all") { q += " AND i.status = ?"; p.push(filter); }
+    if (filter !== "all") {
+      q += " AND i.status = ?";
+      p.push(filter);
+    }
     q += " ORDER BY i.invoice_date DESC";
     setInvoices(await db.select<any[]>(q, p));
   }
 
-  const totals = invoices.reduce((a, i) => {
-    a.total += i.total_amount || 0;
-    a.paid += i.paid_amount || 0;
-    a.outstanding += (i.total_amount || 0) - (i.paid_amount || 0);
-    return a;
-  }, { total: 0, paid: 0, outstanding: 0 });
+  function handleDelete(inv: any) {
+    const lines: string[] = [
+      `Invoice: ${inv.invoice_no}`,
+      `Client: ${inv.client_name}`,
+      `Amount: ${formatCurrency(inv.total_amount)}`,
+      `Paid: ${formatCurrency(inv.paid_amount)}`,
+    ];
+    if (inv.payment_count > 0) {
+      lines.push(`Payments: ${inv.payment_count} payment(s) will be deleted`);
+    }
+
+    setConfirmState({
+      open: true,
+      title: "Delete Invoice",
+      message:
+        lines.join("\n") +
+        `\n\nThis will permanently delete the invoice` +
+        (inv.payment_count > 0 ? " and all its payments" : "") +
+        `.\n\nThis cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, open: false }));
+        const result = await hardDeleteInvoice(inv.id);
+        if (!result.ok) {
+          alert("Delete failed: " + result.message);
+          return;
+        }
+        await logAudit("delete_invoice", "invoice", inv.id, {
+          invoice_no: inv.invoice_no,
+          stats: result.stats,
+        });
+        load();
+      },
+    });
+  }
+
+  const totals = invoices.reduce(
+    (a, i) => {
+      a.total += i.total_amount || 0;
+      a.paid += i.paid_amount || 0;
+      a.outstanding += (i.total_amount || 0) - (i.paid_amount || 0);
+      return a;
+    },
+    { total: 0, paid: 0, outstanding: 0 }
+  );
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Fees & Payments</h1>
-          <p className="text-sm text-gray-500">Invoices and outstanding balances</p>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Fees & Payments
+          </h1>
+          <p className="text-sm text-gray-500">
+            Invoices and outstanding balances
+          </p>
         </div>
         <div className="flex gap-2">
-          <Link to="/fees/estimate" className="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+          <Link
+            to="/fees/estimate"
+            className="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium"
+          >
             <FileText size={16} /> Fee Estimate
           </Link>
-          <Link to="/fees/payments" className="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+          <Link
+            to="/fees/payments"
+            className="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium"
+          >
             <Wallet size={16} /> Payments
           </Link>
-          <Link to="/fees/invoices/new" className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          <Link
+            to="/fees/invoices/new"
+            className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
             <Plus size={16} /> New Invoice
           </Link>
         </div>
@@ -55,8 +126,16 @@ export default function Fees() {
 
       <div className="flex bg-white border border-gray-200 rounded-lg p-1 w-fit">
         {(["all", "unpaid", "partial", "paid"] as const).map((f) => (
-          <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 text-sm rounded-md font-medium ${filter === f ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}>
-            {f.charAt(0).toUpperCase() + f.slice(1)}
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3 py-1.5 text-sm rounded-md font-medium capitalize ${
+              filter === f
+                ? "bg-brand-600 text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            {f}
           </button>
         ))}
       </div>
@@ -77,25 +156,76 @@ export default function Fees() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {invoices.length === 0 && <tr><td colSpan={9} className="text-center py-10 text-gray-500">No invoices.</td></tr>}
+            {invoices.length === 0 && (
+              <tr>
+                <td colSpan={9} className="text-center py-10 text-gray-500">
+                  No invoices.
+                </td>
+              </tr>
+            )}
             {invoices.map((inv) => {
               const bal = inv.total_amount - inv.paid_amount;
-              const days = bal > 0 ? daysOutstanding(inv.invoice_date) : 0;
+              const days =
+                bal > 0 ? daysOutstanding(inv.invoice_date) : 0;
               return (
                 <tr key={inv.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-xs">{inv.invoice_no}</td>
-                  <td className="px-4 py-3">{inv.client_name}</td>
-                  <td className="px-4 py-3 text-gray-600">{inv.service_name || "—"}</td>
-                  <td className="px-4 py-3 text-right">{formatCurrency(inv.total_amount)}</td>
-                  <td className="px-4 py-3 text-right">{formatCurrency(inv.paid_amount)}</td>
-                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(bal)}</td>
-                  <td className="px-4 py-3 text-right text-xs">
-                    {days > 0 ? <span className={days > 30 ? "text-red-600 font-medium" : "text-gray-600"}>{days}</span> : "—"}
+                  <td className="px-4 py-3 font-mono text-xs">
+                    {inv.invoice_no}
                   </td>
-                  <td className="px-4 py-3"><StatusBadge status={inv.status} /></td>
-                  <td className="px-4 py-3 text-right space-x-2">
-                    {bal > 0 && <Link to={`/fees/payments/new?invoice=${inv.id}`} className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">Pay</Link>}
-                    <Link to={`/fees/invoices/${inv.id}/edit`} className="text-xs text-brand-600 hover:text-brand-700 font-medium">Edit</Link>
+                  <td className="px-4 py-3">{inv.client_name}</td>
+                  <td className="px-4 py-3 text-gray-600">
+                    {inv.service_name || "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {formatCurrency(inv.total_amount)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {formatCurrency(inv.paid_amount)}
+                  </td>
+                  <td className="px-4 py-3 text-right font-medium">
+                    {formatCurrency(bal)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-xs">
+                    {days > 0 ? (
+                      <span
+                        className={
+                          days > 30
+                            ? "text-red-600 font-medium"
+                            : "text-gray-600"
+                        }
+                      >
+                        {days}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={inv.status} />
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="inline-flex items-center gap-3">
+                      {bal > 0 && (
+                        <Link
+                          to={`/fees/payments/new?invoice=${inv.id}`}
+                          className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                        >
+                          Pay
+                        </Link>
+                      )}
+                      <Link
+                        to={`/fees/invoices/${inv.id}/edit`}
+                        className="text-xs text-brand-600 hover:text-brand-700 font-medium"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(inv)}
+                        className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 font-medium"
+                      >
+                        <Trash2 size={12} /> Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -103,12 +233,35 @@ export default function Fees() {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmLabel="Delete"
+        danger
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+      />
     </div>
   );
 }
 
-function SC({ label, value, tone = "default" }: any) {
-  const c = tone === "danger" ? "text-red-600" : tone === "success" ? "text-emerald-600" : "text-gray-900";
+function SC({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "success" | "danger";
+}) {
+  const c =
+    tone === "danger"
+      ? "text-red-600"
+      : tone === "success"
+      ? "text-emerald-600"
+      : "text-gray-900";
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
       <div className="text-sm text-gray-500">{label}</div>

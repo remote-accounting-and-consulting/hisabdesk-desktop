@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Search, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getDb } from "@/lib/db";
+import GlobalSearch from "./GlobalSearch";
 
 export default function Topbar() {
   const [unread, setUnread] = useState(0);
@@ -18,17 +19,8 @@ export default function Topbar() {
 
   return (
     <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8">
-      <div className="relative w-[28rem]">
-        <Search
-          size={18}
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-        />
-        <input
-          type="text"
-          placeholder="Search clients, work, invoices..."
-          className="w-full pl-11 pr-4 py-2.5 text-base border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-        />
-      </div>
+      <GlobalSearch />
+
       <div className="flex items-center gap-6">
         <div className="text-base text-gray-600">
           Fiscal Year:{" "}

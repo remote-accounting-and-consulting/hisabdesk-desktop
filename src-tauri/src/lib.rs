@@ -33,6 +33,12 @@ pub fn run() {
             sql: include_str!("../migrations/005_notification_dedupe.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "builtin_flag",
+            sql: include_str!("../migrations/006_builtin_flag.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

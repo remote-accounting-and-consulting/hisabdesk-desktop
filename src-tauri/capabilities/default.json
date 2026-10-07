@@ -7,10 +7,16 @@
     "core:default",
     "sql:default",
     "sql:allow-execute",
+
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-save",
+
     "fs:default",
+    "fs:read-all",
+    "fs:write-all",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
     "fs:allow-read-file",
     "fs:allow-write-file",
     "fs:allow-copy-file",
@@ -21,13 +27,17 @@
     "fs:allow-stat",
     "fs:scope-home-recursive",
     "fs:scope-appdata-recursive",
+    "fs:scope-appconfig-recursive",
+    "fs:scope-desktop-recursive",
+    "fs:scope-document-recursive",
+    "fs:scope-download-recursive",
+
     "opener:default",
     {
       "identifier": "opener:allow-open-path",
-      "allow": [
-        { "path": "**" }
-      ]
+      "allow": [{ "path": "**" }]
     },
+
     "notification:default",
     "notification:allow-notify",
     "notification:allow-request-permission",

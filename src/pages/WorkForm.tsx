@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getDb, logAudit } from "@/lib/db";
+import { hardDeleteWork } from "@/lib/delete";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { Trash2 } from "lucide-react";
 
 export default function WorkForm() {
   const { id } = useParams();
@@ -17,6 +20,7 @@ export default function WorkForm() {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -38,6 +42,16 @@ export default function WorkForm() {
       }
     })();
   }, [id]);
+
+  async function handleDelete() {
+    const result = await hardDeleteWork(Number(id));
+    if (!result.ok) {
+      alert("Delete failed: " + result.message);
+      return;
+    }
+    await logAudit("delete_work", "work", Number(id));
+    navigate("/work");
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -2,10 +2,18 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { getDb, logAudit } from "@/lib/db";
-import { deleteStaff } from "@/lib/delete";
+import { hardDeleteStaff } from "@/lib/delete";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default function Staff() {
   const [staff, setStaff] = useState<any[]>([]);
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ open: false, title: "", message: "", onConfirm: () => {} });
 
   useEffect(() => {
     load();
@@ -19,48 +27,61 @@ export default function Staff() {
           (SELECT COUNT(*) FROM work_assignments
            WHERE assigned_staff_id = s.id AND status != 'completed') as active_work
          FROM staff s
-         ORDER BY s.active DESC, s.name`
+         WHERE s.active = 1
+         ORDER BY s.name`
       )
     );
   }
 
   async function handleDelete(s: any) {
-    if (
-      !confirm(
-        `Delete "${s.name}" (${s.staff_code})?\n\nThis cannot be undone.`
-      )
-    )
-      return;
-
-    let force = false;
-    let result = await deleteStaff(s.id, false);
-
-    // If it fails because of dependencies, offer force delete
-    if (!result.ok && result.message.includes("assigned")) {
-      force = confirm(
-        result.message + "\n\nForce delete anyway?\n" +
-        "(Historical records will lose the staff link)"
-      );
-      if (!force) return;
-      result = await deleteStaff(s.id, true);
-    }
-
-    if (!result.ok) {
-      alert(result.message);
-      return;
-    }
-
-    await logAudit("delete_staff", "staff", s.id, { name: s.name });
-    load();
-  }
-
-  async function toggleActive(s: any) {
     const db = await getDb();
-    await db.execute("UPDATE staff SET active = ? WHERE id = ?", [
-      s.active ? 0 : 1,
-      s.id,
-    ]);
-    load();
+    const [stats] = await db.select<any[]>(
+      `SELECT
+         (SELECT COUNT(*) FROM work_assignments WHERE assigned_staff_id = ?) as work,
+         (SELECT COUNT(*) FROM work_assignments WHERE supervisor_id = ?) as sup`,
+      [s.id, s.id]
+    );
+
+    const total = (stats?.work || 0) + (stats?.sup || 0);
+
+    let message: string;
+    if (total === 0) {
+      message = `Delete "${s.name}" (${s.staff_code})?`;
+    } else {
+      const lines: string[] = [];
+      if (stats.work > 0) lines.push(`  • ${stats.work} work item(s) assigned`);
+      if (stats.sup > 0) lines.push(`  • ${stats.sup} work item(s) supervised`);
+
+      message =
+        `This staff member has assigned work:\n\n` +
+        lines.join("\n") +
+        `\n\nDelete "${s.name}"?\n\n` +
+        `Their work will be kept but unassigned.`;
+    }
+
+    setConfirmState({
+      open: true,
+      title: "Delete Staff",
+      message,
+      onConfirm: async () => {
+        setConfirmState((cs) => ({ ...cs, open: false }));
+        setDeleting(s.id);
+        try {
+          const result = await hardDeleteStaff(s.id);
+          if (!result.ok) {
+            alert("Delete failed: " + result.message);
+            return;
+          }
+          await logAudit("delete_staff", "staff", s.id, {
+            name: s.name,
+            stats: result.stats,
+          });
+          load();
+        } finally {
+          setDeleting(null);
+        }
+      },
+    });
   }
 
   const max = Math.max(...staff.map((s) => s.active_work), 1);
@@ -70,9 +91,7 @@ export default function Staff() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Staff</h1>
-          <p className="text-sm text-gray-500">
-            Team members and workload
-          </p>
+          <p className="text-sm text-gray-500">Team members and workload</p>
         </div>
         <Link
           to="/staff/new"
@@ -89,7 +108,7 @@ export default function Staff() {
               <th className="text-left px-4 py-3 font-medium text-gray-600">Code</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Name</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Position</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">Contact</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Active Work</th>
               <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
             </tr>
@@ -103,28 +122,13 @@ export default function Staff() {
               </tr>
             )}
             {staff.map((s) => (
-              <tr
-                key={s.id}
-                className={`hover:bg-gray-50 ${!s.active ? "opacity-50" : ""}`}
-              >
+              <tr key={s.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-mono text-xs text-gray-500">
                   {s.staff_code}
                 </td>
                 <td className="px-4 py-3 font-medium">{s.name}</td>
-                <td className="px-4 py-3 text-gray-600">
-                  {s.position || "—"}
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      s.active
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {s.active ? "Active" : "Disabled"}
-                  </span>
-                </td>
+                <td className="px-4 py-3 text-gray-600">{s.position || "—"}</td>
+                <td className="px-4 py-3 text-gray-600">{s.contact || "—"}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -133,9 +137,7 @@ export default function Staff() {
                         style={{ width: `${(s.active_work / max) * 100}%` }}
                       />
                     </div>
-                    <span className="text-xs text-gray-500">
-                      {s.active_work}
-                    </span>
+                    <span className="text-xs text-gray-500">{s.active_work}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right space-x-3">
@@ -146,16 +148,12 @@ export default function Staff() {
                     <Edit size={12} /> Edit
                   </Link>
                   <button
-                    onClick={() => toggleActive(s)}
-                    className="text-xs text-gray-600 hover:text-gray-800 font-medium"
-                  >
-                    {s.active ? "Disable" : "Enable"}
-                  </button>
-                  <button
                     onClick={() => handleDelete(s)}
-                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 font-medium"
+                    disabled={deleting === s.id}
+                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
                   >
-                    <Trash2 size={12} /> Delete
+                    <Trash2 size={12} />
+                    {deleting === s.id ? "Deleting..." : "Delete"}
                   </button>
                 </td>
               </tr>
@@ -163,6 +161,16 @@ export default function Staff() {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmLabel="Delete"
+        danger
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+      />
     </div>
   );
 }
