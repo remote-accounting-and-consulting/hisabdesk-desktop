@@ -33,10 +33,7 @@ export default function ClientServices() {
       for (const svc of services) {
         const s = selected[svc.id];
         if (s?.checked) {
-          await db.execute(
-            "INSERT INTO client_services (client_id, service_id, estimated_fee, tax_amount) VALUES (?, ?, ?, ?)",
-            [id, svc.id, Number(s.fee) || 0, Number(s.tax) || 0]
-          );
+          await db.execute("INSERT INTO client_services (client_id, service_id, estimated_fee, tax_amount) VALUES (?, ?, ?, ?)", [id, svc.id, Number(s.fee) || 0, Number(s.tax) || 0]);
         }
       }
       await logAudit("update_client_services", "client", Number(id));
@@ -48,26 +45,26 @@ export default function ClientServices() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Manage Services</h1>
-        <p className="text-sm text-gray-500">Select services for this client and set fees</p>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Manage Services</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Select services for this client and set fees</p>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 divide-y divide-gray-100 dark:divide-slate-700">
         {services.map((s) => {
           const state = selected[s.id] || { checked: false, fee: "0", tax: "0" };
           return (
             <div key={s.id} className="p-4">
-              <label className="flex items-center gap-3">
+              <label className="flex items-center gap-3 text-gray-900 dark:text-gray-200">
                 <input type="checkbox" checked={state.checked} onChange={(e) => setSelected({ ...selected, [s.id]: { ...state, checked: e.target.checked } })} />
-                <span className="text-sm font-medium text-gray-900">{s.name}</span>
+                <span className="text-sm font-medium">{s.name}</span>
               </label>
               {state.checked && (
                 <div className="grid grid-cols-2 gap-3 mt-3 ml-7">
                   <div>
-                    <label className="block text-xs text-gray-600 mb-1">Estimated Fee (Rs.)</label>
+                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Estimated Fee (Rs.)</label>
                     <input type="number" value={state.fee} onChange={(e) => setSelected({ ...selected, [s.id]: { ...state, fee: e.target.value } })} className="input" />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-600 mb-1">Tax Amount (Rs.)</label>
+                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Tax Amount (Rs.)</label>
                     <input type="number" value={state.tax} onChange={(e) => setSelected({ ...selected, [s.id]: { ...state, tax: e.target.value } })} className="input" />
                   </div>
                 </div>
@@ -77,7 +74,7 @@ export default function ClientServices() {
         })}
       </div>
       <div className="flex justify-end gap-3">
-        <button onClick={() => navigate(-1)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+        <button onClick={() => navigate(-1)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600">Cancel</button>
         <button onClick={save} disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50">{saving ? "Saving..." : "Save Services"}</button>
       </div>
     </div>

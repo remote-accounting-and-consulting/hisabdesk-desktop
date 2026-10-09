@@ -128,12 +128,14 @@ export default function ClientForm() {
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">{isEdit ? "Edit Client" : "New Client Registration"}</h1>
-        <p className="text-sm text-gray-500">Register a client with complete details</p>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          {isEdit ? "Edit Client" : "New Client Registration"}
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Register a client with complete details</p>
       </div>
       <form onSubmit={onSubmit} className="space-y-6">
-        <section className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Basic Information</h2>
+        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+          <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Client Name *"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input" /></Field>
             <Field label="PAN No."><input value={form.pan_no} onChange={(e) => setForm({ ...form, pan_no: e.target.value })} className="input" /></Field>
@@ -151,8 +153,14 @@ export default function ClientForm() {
             </Field>
             <Field label="Category *">
               <div className="flex gap-4 pt-2">
-                <label className="flex items-center gap-2"><input type="radio" value="one_time" checked={form.category === "one_time"} onChange={(e) => setForm({ ...form, category: e.target.value })} /><span className="text-sm">One-Time</span></label>
-                <label className="flex items-center gap-2"><input type="radio" value="regular" checked={form.category === "regular"} onChange={(e) => setForm({ ...form, category: e.target.value })} /><span className="text-sm">Regular</span></label>
+                <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <input type="radio" value="one_time" checked={form.category === "one_time"} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                  <span className="text-sm">One-Time</span>
+                </label>
+                <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <input type="radio" value="regular" checked={form.category === "regular"} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                  <span className="text-sm">Regular</span>
+                </label>
               </div>
             </Field>
             <Field label="Registration Date"><input type="date" value={form.registration_date} onChange={(e) => setForm({ ...form, registration_date: e.target.value })} className="input" /></Field>
@@ -161,8 +169,9 @@ export default function ClientForm() {
             <Field label="Email"><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="input" /></Field>
           </div>
         </section>
-        <section className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Address</h2>
+
+        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+          <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Address</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Province">
               <select value={form.province_id} onChange={(e) => handleProvince(e.target.value)} className="input">
@@ -176,19 +185,10 @@ export default function ClientForm() {
                 {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </Field>
-            <Field label="Local Level (Municipality / Rural Municipality)">
-              <select
-                value={form.local_level_id}
-                onChange={(e) => handleLocalLevel(e.target.value)}
-                className="input"
-                disabled={!form.district_id}
-              >
+            <Field label="Local Level">
+              <select value={form.local_level_id} onChange={(e) => handleLocalLevel(e.target.value)} className="input" disabled={!form.district_id}>
                 <option value="">— Select —</option>
-                {localLevels.map((l) => (
-                  <option key={l.id} value={l.id}>
-                  {l.name} ({l.type})
-                  </option>
-                ))}
+                {localLevels.map((l) => <option key={l.id} value={l.id}>{l.name} ({l.type})</option>)}
               </select>
             </Field>
             <Field label="Ward No.">
@@ -206,12 +206,15 @@ export default function ClientForm() {
             </Field>
           </div>
         </section>
-        <section className="bg-white rounded-xl border border-gray-200 p-6">
+
+        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
           <Field label="Remarks"><textarea rows={3} value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} className="input" /></Field>
         </section>
-        {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{error}</div>}
+
+        {error && <div className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3">{error}</div>}
+
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+          <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600">Cancel</button>
           <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50">{saving ? "Saving..." : isEdit ? "Update" : "Register"}</button>
         </div>
       </form>
@@ -222,7 +225,7 @@ export default function ClientForm() {
 function Field({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
     <div className={full ? "md:col-span-2" : ""}>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
       {children}
     </div>
   );

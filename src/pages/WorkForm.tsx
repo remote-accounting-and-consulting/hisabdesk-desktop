@@ -45,10 +45,7 @@ export default function WorkForm() {
 
   async function handleDelete() {
     const result = await hardDeleteWork(Number(id));
-    if (!result.ok) {
-      alert("Delete failed: " + result.message);
-      return;
-    }
+    if (!result.ok) { alert("Delete failed: " + result.message); return; }
     await logAudit("delete_work", "work", Number(id));
     navigate("/work");
   }
@@ -69,14 +66,12 @@ export default function WorkForm() {
       if (isEdit) {
         await db.execute(
           `UPDATE work_assignments SET client_id=?, service_id=?, title=?, fiscal_year=?, priority=?, status=?, start_date=?, due_date=?, estimated_hours=?, assigned_staff_id=?, supervisor_id=?, notes=?, updated_at=datetime('now') WHERE id=?`,
-          [...payload, id]
-        );
+          [...payload, id]);
         await logAudit("update_work", "work", Number(id));
       } else {
         const result = await db.execute(
           `INSERT INTO work_assignments (client_id, service_id, title, fiscal_year, priority, status, start_date, due_date, estimated_hours, assigned_staff_id, supervisor_id, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          payload
-        );
+          payload);
         await logAudit("create_work", "work", Number((result as any).lastInsertId));
       }
       navigate("/work");
@@ -87,10 +82,10 @@ export default function WorkForm() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">{isEdit ? "Edit Work" : "New Work Assignment"}</h1>
-        <p className="text-sm text-gray-500">Assign work with priority and deadline</p>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{isEdit ? "Edit Work" : "New Work Assignment"}</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Assign work with priority and deadline</p>
       </div>
-      <form onSubmit={onSubmit} className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+      <form onSubmit={onSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Client *">
             <select required value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} className="input">
@@ -138,20 +133,27 @@ export default function WorkForm() {
           </Field>
           <Field label="Notes" full><textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="input" /></Field>
         </div>
-        {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{error}</div>}
+        {error && <div className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3">{error}</div>}
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+          <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600">Cancel</button>
+          {isEdit && (
+            <button type="button" onClick={() => setConfirmOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+              <Trash2 size={14} /> Delete
+            </button>
+          )}
           <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50">{saving ? "Saving..." : isEdit ? "Update" : "Create"}</button>
         </div>
       </form>
+      <ConfirmDialog open={confirmOpen} title="Delete Work Assignment" message="Delete this work assignment? This cannot be undone."
+        confirmLabel="Delete" danger onConfirm={handleDelete} onCancel={() => setConfirmOpen(false)} />
     </div>
   );
 }
 
-function Field({ label, children, full }: any) {
+function Field({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
     <div className={full ? "md:col-span-2" : ""}>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
       {children}
     </div>
   );

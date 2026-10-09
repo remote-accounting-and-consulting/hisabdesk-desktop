@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +7,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <title>HisabDesk</title>
+    <script>
+      (function () {
+        try { document.documentElement.classList.add("dark"); } catch (e) {}
+      })();
+    </script>
+    <style>
+      html, body, #root { margin: 0; height: 100%; background: #0f172a; color: #e2e8f0; }
+      html:not(.dark) body { background: #f9fafb; color: #1f2937; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

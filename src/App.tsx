@@ -23,6 +23,7 @@ import Settings from "@/pages/Settings";
 import Reports from "@/pages/Reports";
 import Notifications from "@/pages/Notifications";
 import { initializeDatabase } from "@/lib/db";
+import { getSavedTheme, applyTheme } from "@/lib/theme";
 import { recalculateDueDates } from "@/lib/dueDate";
 import {
   scanAndCreateNotifications,
@@ -43,6 +44,11 @@ function App() {
         const minSplash = new Promise((r) => setTimeout(r, 800));
 
         await initializeDatabase();
+
+        // Load and apply saved theme
+        const theme = await getSavedTheme();
+        applyTheme(theme);
+
         await recalculateDueDates();
         await cleanupOldNotifications();
         await scanAndCreateNotifications();
@@ -69,11 +75,11 @@ function App() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-red-50 p-8">
-        <div className="max-w-lg bg-white p-6 rounded-lg shadow">
+        <div className="max-w-lg bg-white dark:bg-slate-800 p-6 rounded-lg shadow">
           <h1 className="text-xl font-semibold text-red-700 mb-2">
             Initialization Failed
           </h1>
-          <pre className="text-xs bg-gray-100 p-3 rounded overflow-auto">
+          <pre className="text-xs bg-gray-100 dark:bg-slate-700 p-3 rounded overflow-auto">
             {error}
           </pre>
         </div>

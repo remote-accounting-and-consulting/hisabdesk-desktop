@@ -1,20 +1,20 @@
 import { cn } from "@/lib/utils";
 
 const styles: any = {
-  completed: "bg-emerald-100 text-emerald-800",
-  wip: "bg-blue-100 text-blue-800",
-  started: "bg-blue-100 text-blue-800",
-  not_started: "bg-gray-100 text-gray-700",
-  due_today: "bg-orange-100 text-orange-800",
-  due_soon: "bg-amber-100 text-amber-800",
-  overdue: "bg-red-100 text-red-800",
-  pending: "bg-gray-100 text-gray-700",
-  filed: "bg-emerald-100 text-emerald-800",
-  submitted: "bg-blue-100 text-blue-800",
-  late: "bg-red-100 text-red-800",
-  paid: "bg-emerald-100 text-emerald-800",
-  unpaid: "bg-red-100 text-red-800",
-  partial: "bg-amber-100 text-amber-800",
+  completed: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300",
+  wip: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300",
+  started: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300",
+  not_started: "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300",
+  due_today: "bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300",
+  due_soon: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300",
+  overdue: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+  pending: "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300",
+  filed: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300",
+  submitted: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300",
+  late: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+  paid: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300",
+  unpaid: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+  partial: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300",
 };
 
 const labels: any = {
@@ -26,12 +26,7 @@ const labels: any = {
 
 export default function StatusBadge({ status }: { status: string }) {
   return (
-    <span
-      className={cn(
-        "inline-block px-3 py-1 rounded-full text-xs font-medium",
-        styles[status] || "bg-gray-100 text-gray-700"
-      )}
-    >
+    <span className={cn("inline-block px-3 py-1 rounded-full text-xs font-medium", styles[status] || "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300")}>
       {labels[status] || status}
     </span>
   );

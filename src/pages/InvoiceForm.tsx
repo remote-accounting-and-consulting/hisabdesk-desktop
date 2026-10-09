@@ -55,13 +55,11 @@ export default function InvoiceForm() {
       if (isEdit) {
         await db.execute(
           `UPDATE invoices SET invoice_no=?, client_id=?, service_id=?, invoice_date=?, due_date=?, service_fee=?, tax_amount=?, total_amount=?, remarks=? WHERE id=?`,
-          [form.invoice_no, Number(form.client_id), form.service_id ? Number(form.service_id) : null, form.invoice_date, form.due_date || null, sf, ta, tt, form.remarks || null, id]
-        );
+          [form.invoice_no, Number(form.client_id), form.service_id ? Number(form.service_id) : null, form.invoice_date, form.due_date || null, sf, ta, tt, form.remarks || null, id]);
       } else {
         await db.execute(
           `INSERT INTO invoices (invoice_no, client_id, service_id, invoice_date, due_date, service_fee, tax_amount, total_amount, status, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', ?)`,
-          [form.invoice_no, Number(form.client_id), form.service_id ? Number(form.service_id) : null, form.invoice_date, form.due_date || null, sf, ta, tt, form.remarks || null]
-        );
+          [form.invoice_no, Number(form.client_id), form.service_id ? Number(form.service_id) : null, form.invoice_date, form.due_date || null, sf, ta, tt, form.remarks || null]);
       }
       await logAudit(isEdit ? "update_invoice" : "create_invoice", "invoice", isEdit ? Number(id) : null);
       navigate("/fees");
@@ -72,10 +70,10 @@ export default function InvoiceForm() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">{isEdit ? "Edit Invoice" : "New Invoice"}</h1>
-        <p className="text-sm text-gray-500">Create a fee invoice</p>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{isEdit ? "Edit Invoice" : "New Invoice"}</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Create a fee invoice</p>
       </div>
-      <form onSubmit={onSubmit} className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+      <form onSubmit={onSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Invoice No. *"><input required value={form.invoice_no} onChange={(e) => setForm({ ...form, invoice_no: e.target.value })} className="input" /></Field>
           <Field label="Client *">
@@ -94,12 +92,14 @@ export default function InvoiceForm() {
           <Field label="Due Date"><input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} className="input" /></Field>
           <Field label="Service Fee (Rs.) *"><input required type="number" min="0" step="0.01" value={form.service_fee} onChange={(e) => setForm({ ...form, service_fee: e.target.value })} className="input" /></Field>
           <Field label="Tax Amount (Rs.)"><input type="number" min="0" step="0.01" value={form.tax_amount} onChange={(e) => setForm({ ...form, tax_amount: e.target.value })} className="input" /></Field>
-          <Field label="Total"><div className="input bg-gray-50 font-semibold">Rs. {total.toLocaleString("en-IN")}</div></Field>
+          <Field label="Total">
+            <div className="input bg-gray-50 dark:bg-slate-900 font-semibold">Rs. {total.toLocaleString("en-IN")}</div>
+          </Field>
           <Field label="Remarks" full><textarea rows={2} value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} className="input" /></Field>
         </div>
-        {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{error}</div>}
+        {error && <div className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3">{error}</div>}
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+          <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600">Cancel</button>
           <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50">{saving ? "Saving..." : isEdit ? "Update" : "Create"}</button>
         </div>
       </form>
@@ -107,10 +107,10 @@ export default function InvoiceForm() {
   );
 }
 
-function Field({ label, children, full }: any) {
+function Field({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
     <div className={full ? "md:col-span-2" : ""}>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
       {children}
     </div>
   );
