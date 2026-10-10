@@ -23,13 +23,13 @@ export default function StatCard({
   hint?: string;
 }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 transition-colors">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-base text-gray-500 dark:text-gray-400">{label}</span>
-        {icon && <div className={cn("p-3 rounded-xl", tones[tone])}>{icon}</div>}
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5 transition-colors">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm text-gray-500 dark:text-gray-400">{label}</span>
+        {icon && <div className={cn("p-2.5 rounded-lg", tones[tone])}>{icon}</div>}
       </div>
-      <div className="text-3xl font-semibold text-gray-900 dark:text-white">{value}</div>
-      {hint && <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{hint}</div>}
+      <div className="text-2xl font-semibold text-gray-900 dark:text-white">{value}</div>
+      {hint && <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{hint}</div>}
     </div>
   );
 }

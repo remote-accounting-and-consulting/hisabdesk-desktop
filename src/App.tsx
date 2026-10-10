@@ -52,6 +52,16 @@ function App() {
         await recalculateDueDates();
         await cleanupOldNotifications();
         await scanAndCreateNotifications();
+
+        // Silent update check (non-blocking)
+        import("@tauri-apps/api/app").then(({ getVersion }) => {
+          import("@/lib/notifications").then(({ checkForUpdateNotification }) => {
+            getVersion().then((v) => {
+              checkForUpdateNotification(v).catch(() => {});
+            });
+          });
+        });
+
         await minSplash;
 
         setReady(true);
@@ -75,8 +85,8 @@ function App() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-red-50 p-8">
-        <div className="max-w-lg bg-white dark:bg-slate-800 p-6 rounded-lg shadow">
-          <h1 className="text-xl font-semibold text-red-700 mb-2">
+        <div className="max-w-lg bg-white dark:bg-slate-800 p-5 rounded-lg shadow">
+          <h1 className="text-2xl font-semibold text-red-700 mb-2">
             Initialization Failed
           </h1>
           <pre className="text-xs bg-gray-100 dark:bg-slate-700 p-3 rounded overflow-auto">

@@ -1,7 +1,7 @@
 PRAGMA foreign_keys = ON;
 CREATE TABLE provinces (id INTEGER PRIMARY KEY, name TEXT NOT NULL, name_np TEXT);
 CREATE TABLE districts (id INTEGER PRIMARY KEY, province_id INTEGER NOT NULL, name TEXT NOT NULL, name_np TEXT, FOREIGN KEY (province_id) REFERENCES provinces(id));
-CREATE TABLE local_levels (id INTEGER PRIMARY KEY AUTOINCREMENT, district_id INTEGER NOT NULL, name TEXT NOT NULL, name_np TEXT, type TEXT CHECK(type IN ('Metropolitan','Sub-Metropolitan','Municipality','Rural Municipality')), wards INTEGER DEFAULT 9, FOREIGN KEY (district_id) REFERENCES districts(id));
+CREATE TABLE local_levels (id INTEGER PRIMARY KEY AUTOINCREMENT, district_id INTEGER NOT NULL, name TEXT NOT NULL, name_np TEXT, type TEXT CHECK(type IN ('Metropolitan','Sub-Metropolitan','Municipality','Rural Municipality')), FOREIGN KEY (district_id) REFERENCES districts(id));
 CREATE INDEX idx_local_levels_district ON local_levels(district_id);
 CREATE TABLE registration_types (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, sort_order INTEGER DEFAULT 0, active INTEGER DEFAULT 1);
 CREATE TABLE business_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, sort_order INTEGER DEFAULT 0, active INTEGER DEFAULT 1);

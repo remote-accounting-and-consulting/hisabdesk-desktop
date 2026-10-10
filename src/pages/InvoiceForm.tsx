@@ -73,7 +73,7 @@ export default function InvoiceForm() {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{isEdit ? "Edit Invoice" : "New Invoice"}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">Create a fee invoice</p>
       </div>
-      <form onSubmit={onSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-5">
+      <form onSubmit={onSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Invoice No. *"><input required value={form.invoice_no} onChange={(e) => setForm({ ...form, invoice_no: e.target.value })} className="input" /></Field>
           <Field label="Client *">

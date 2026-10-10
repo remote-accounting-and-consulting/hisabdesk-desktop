@@ -62,7 +62,7 @@ export default function VAT() {
   const filedCount = rows.filter((r) => r.status === "filed").length;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">VAT Return Tracking</h1>

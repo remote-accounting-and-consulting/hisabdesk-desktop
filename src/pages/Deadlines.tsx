@@ -58,7 +58,7 @@ export default function Deadlines() {
         return (
           <div key={sec.key} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700">
             <div className="px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
-              <h2 className={`font-semibold ${sec.tone} flex items-center gap-2`}><Icon size={18} />{sec.label}</h2>
+              <h2 className={`font-semibold ${sec.tone} flex items-center gap-2`}><Icon size={20} />{sec.label}</h2>
               <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full">{items.length}</span>
             </div>
             <div className="divide-y divide-gray-100 dark:divide-slate-700">
@@ -82,7 +82,7 @@ export default function Deadlines() {
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700">
           <div className="px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
             <h2 className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-2">
-              <Receipt size={18} /> VAT Returns Pending / Late
+              <Receipt size={20} /> VAT Returns Pending / Late
             </h2>
             <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full">{vat.length}</span>
           </div>

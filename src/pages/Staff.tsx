@@ -61,7 +61,7 @@ export default function Staff() {
   const max = Math.max(...staff.map((s) => s.active_work), 1);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Staff</h1>

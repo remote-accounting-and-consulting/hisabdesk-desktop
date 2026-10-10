@@ -85,7 +85,7 @@ export default function WorkForm() {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{isEdit ? "Edit Work" : "New Work Assignment"}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">Assign work with priority and deadline</p>
       </div>
-      <form onSubmit={onSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-5">
+      <form onSubmit={onSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Client *">
             <select required value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} className="input">

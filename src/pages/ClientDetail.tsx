@@ -169,7 +169,7 @@ function SummaryCard({ label, value, tone = "default" }: { label: string; value:
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4">
       <div className="text-xs text-gray-500 dark:text-gray-400">{label}</div>
-      <div className={`text-xl font-semibold mt-1 ${tone === "danger" ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}`}>{value}</div>
+      <div className={`text-2xl font-semibold mt-1 ${tone === "danger" ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}`}>{value}</div>
     </div>
   );
 }

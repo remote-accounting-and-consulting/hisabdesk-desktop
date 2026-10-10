@@ -259,3 +259,87 @@ export async function notifyNow(
     });
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  UPDATE CHECK — silent background check on app launch               */
+/* ------------------------------------------------------------------ */
+
+const GITHUB_REPO = "remote-accounting-and-consulting/hisabdesk-desktop";
+const RELEASES_API = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+
+function compareSemver(a: string, b: string): number {
+  const clean = (v: string) =>
+    v.replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
+  const aP = clean(a);
+  const bP = clean(b);
+  const len = Math.max(aP.length, bP.length);
+  for (let i = 0; i < len; i++) {
+    const av = aP[i] || 0;
+    const bv = bP[i] || 0;
+    if (av > bv) return 1;
+    if (av < bv) return -1;
+  }
+  return 0;
+}
+
+/**
+ * Check GitHub for a newer release. If found, create a notification.
+ * Safe to call on every launch — deduplicated by version.
+ */
+export async function checkForUpdateNotification(
+  currentVersion: string
+): Promise<void> {
+  try {
+    const res = await fetch(RELEASES_API, {
+      headers: { Accept: "application/vnd.github+json" },
+    });
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const tag = (data.tag_name || "").replace(/^v/, "");
+    if (!tag) return;
+
+    // Only notify if newer
+    if (compareSemver(currentVersion, tag) >= 0) return;
+
+    const db = await getDb();
+    const dedupeKey = `update:v${tag}`;
+
+    // Check if we already notified for this version
+    const [existing] = await db.select<any[]>(
+      "SELECT id FROM notifications WHERE dedupe_key = ?",
+      [dedupeKey]
+    );
+    if (existing) return;
+
+    // Create the in-app notification
+    await db.execute(
+      `INSERT INTO notifications (title, message, type, link, dedupe_key)
+       VALUES (?, ?, 'info', '/settings?tab=update&autocheck=1', ?)`,
+      [
+        `Update available: v${tag}`,
+        `HisabDesk v${tag} is available. You're on v${currentVersion}.`,
+        dedupeKey,
+      ]
+    );
+
+    // Fire an OS-native notification too
+    try {
+      let granted = await isPermissionGranted();
+      if (!granted) {
+        const perm = await requestPermission();
+        granted = perm === "granted";
+      }
+      if (granted) {
+        sendNotification({
+          title: `HisabDesk update available`,
+          body: `Version ${tag} is available. You're on ${currentVersion}.`,
+        });
+      }
+    } catch {
+      // Ignore OS notification failures
+    }
+  } catch {
+    // Silent fail — no internet, offline, etc.
+  }
+}

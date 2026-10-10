@@ -175,7 +175,7 @@ export default function GlobalSearch() {
   return (
     <div ref={wrapperRef} className="relative w-[28rem]">
       <Search
-        size={18}
+        size={20}
         className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none"
       />
       <input

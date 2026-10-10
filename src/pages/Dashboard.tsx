@@ -98,37 +98,37 @@ export default function Dashboard() {
       <div>
         <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Clients</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard label="Total Clients" value={stats.totalClients} icon={<Users size={18} />} tone="info" />
-          <StatCard label="Regular Clients" value={stats.regularClients} icon={<Users size={18} />} tone="success" />
-          <StatCard label="One-Time Clients" value={stats.oneTimeClients} icon={<Users size={18} />} />
+          <StatCard label="Total Clients" value={stats.totalClients} icon={<Users size={20} />} tone="info" />
+          <StatCard label="Regular Clients" value={stats.regularClients} icon={<Users size={20} />} tone="success" />
+          <StatCard label="One-Time Clients" value={stats.oneTimeClients} icon={<Users size={20} />} />
         </div>
       </div>
 
       <div>
         <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Work</h2>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <StatCard label="WIP" value={stats.workInProgress} icon={<Briefcase size={18} />} tone="info" />
-          <StatCard label="Due Today" value={stats.dueToday} icon={<Clock size={18} />} tone="danger" />
-          <StatCard label="Due Soon" value={stats.dueSoon} icon={<Clock size={18} />} tone="warning" />
-          <StatCard label="Overdue" value={stats.overdue} icon={<AlertTriangle size={18} />} tone="danger" />
-          <StatCard label="Completed (Month)" value={stats.completedThisMonth} icon={<CheckCircle2 size={18} />} tone="success" />
+          <StatCard label="WIP" value={stats.workInProgress} icon={<Briefcase size={20} />} tone="info" />
+          <StatCard label="Due Today" value={stats.dueToday} icon={<Clock size={20} />} tone="danger" />
+          <StatCard label="Due Soon" value={stats.dueSoon} icon={<Clock size={20} />} tone="warning" />
+          <StatCard label="Overdue" value={stats.overdue} icon={<AlertTriangle size={20} />} tone="danger" />
+          <StatCard label="Completed (Month)" value={stats.completedThisMonth} icon={<CheckCircle2 size={20} />} tone="success" />
         </div>
       </div>
 
       <div>
         <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Finance</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard label="Total Billed" value={formatCurrency(stats.totalReceivable)} icon={<Wallet size={18} />} tone="info" />
-          <StatCard label="Collected (Month)" value={formatCurrency(stats.collectedThisMonth)} icon={<Wallet size={18} />} tone="success" />
-          <StatCard label="Outstanding" value={formatCurrency(stats.outstanding)} icon={<AlertTriangle size={18} />} tone="danger" />
+          <StatCard label="Total Billed" value={formatCurrency(stats.totalReceivable)} icon={<Wallet size={20} />} tone="info" />
+          <StatCard label="Collected (Month)" value={formatCurrency(stats.collectedThisMonth)} icon={<Wallet size={20} />} tone="success" />
+          <StatCard label="Outstanding" value={formatCurrency(stats.outstanding)} icon={<AlertTriangle size={20} />} tone="danger" />
         </div>
       </div>
 
       <div>
         <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Pending</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Link to="/documents"><StatCard label="Documents" value="View" icon={<FileText size={18} />} tone="warning" /></Link>
-          <Link to="/vat"><StatCard label="VAT Pending" value={stats.vatPending} icon={<Receipt size={18} />} tone="warning" /></Link>
+          <Link to="/documents"><StatCard label="Documents" value="View" icon={<FileText size={20} />} tone="warning" /></Link>
+          <Link to="/vat"><StatCard label="VAT Pending" value={stats.vatPending} icon={<Receipt size={20} />} tone="warning" /></Link>
         </div>
       </div>
 

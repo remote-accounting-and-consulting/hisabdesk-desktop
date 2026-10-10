@@ -69,9 +69,6 @@ export default function ClientForm() {
     setForm({ ...form, local_level_id: v, ward_no: "" });
   }
 
-  const selectedLL = localLevels.find((l) => String(l.id) === form.local_level_id);
-  const wardCount = selectedLL?.wards || 0;
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -134,7 +131,7 @@ export default function ClientForm() {
         <p className="text-sm text-gray-500 dark:text-gray-400">Register a client with complete details</p>
       </div>
       <form onSubmit={onSubmit} className="space-y-6">
-        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5">
           <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Client Name *"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input" /></Field>
@@ -170,7 +167,7 @@ export default function ClientForm() {
           </div>
         </section>
 
-        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5">
           <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Address</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Province">
@@ -192,14 +189,15 @@ export default function ClientForm() {
               </select>
             </Field>
             <Field label="Ward No.">
-              {wardCount > 0 ? (
-                <select value={form.ward_no} onChange={(e) => setForm({ ...form, ward_no: e.target.value })} className="input">
-                  <option value="">— Select Ward —</option>
-                  {Array.from({ length: wardCount }, (_, i) => i + 1).map((w) => <option key={w} value={w}>Ward {w}</option>)}
-                </select>
-              ) : (
-                <input type="number" min="1" max="35" value={form.ward_no} onChange={(e) => setForm({ ...form, ward_no: e.target.value })} disabled={!form.local_level_id} className="input" placeholder={form.local_level_id ? "Enter ward" : "Select local level"} />
-              )}
+              <input
+                type="number"
+                min="1"
+                max="35"
+                value={form.ward_no}
+                onChange={(e) => setForm({ ...form, ward_no: e.target.value })}
+                placeholder="e.g. 7"
+                className="input"
+              />
             </Field>
             <Field label="Address Line" full>
               <input value={form.address_line} onChange={(e) => setForm({ ...form, address_line: e.target.value })} placeholder="Street, Tole" className="input" />
@@ -207,7 +205,7 @@ export default function ClientForm() {
           </div>
         </section>
 
-        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5">
           <Field label="Remarks"><textarea rows={3} value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} className="input" /></Field>
         </section>
 

@@ -57,7 +57,7 @@ export default function PaymentForm() {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Record Payment</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">Enter a payment against an invoice</p>
       </div>
-      <form onSubmit={onSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-5">
+      <form onSubmit={onSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-6">
         <Field label="Invoice *">
           <select required value={form.invoice_id} onChange={(e) => setForm({ ...form, invoice_id: e.target.value, amount: "" })} className="input">
             <option value="">— Select Invoice —</option>

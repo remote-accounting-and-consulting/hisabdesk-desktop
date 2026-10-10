@@ -59,7 +59,7 @@ export default function StaffForm() {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{isEdit ? "Edit Staff" : "Add New Staff"}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">{isEdit ? "Update staff information" : "Register a staff member"}</p>
       </div>
-      <form onSubmit={onSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-5">
+      <form onSubmit={onSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Staff Code *">
             <input required value={form.staff_code} onChange={(e) => setForm({ ...form, staff_code: e.target.value })} className="input" />

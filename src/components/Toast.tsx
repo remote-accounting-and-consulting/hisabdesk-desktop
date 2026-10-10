@@ -23,9 +23,9 @@ export default function Toast({ open, type, title, message, onClose, autoCloseMs
   if (!open) return null;
 
   const styles = {
-    success: { bg: "bg-emerald-600", icon: <CheckCircle2 size={20} /> },
-    error: { bg: "bg-red-600", icon: <AlertCircle size={20} /> },
-    loading: { bg: "bg-brand-600", icon: <Loader2 size={20} className="animate-spin" /> },
+    success: { bg: "bg-emerald-600", icon: <CheckCircle2 size={17} /> },
+    error: { bg: "bg-red-600", icon: <AlertCircle size={17} /> },
+    loading: { bg: "bg-brand-600", icon: <Loader2 size={17} className="animate-spin" /> },
   }[type];
 
   return (

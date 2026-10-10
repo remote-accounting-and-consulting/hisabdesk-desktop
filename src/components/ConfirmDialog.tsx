@@ -37,8 +37,8 @@ export default function ConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 border border-gray-200 dark:border-slate-700">
-        <div className="flex items-start gap-4 mb-4">
+      <div className="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full mx-4 p-5 border border-gray-200 dark:border-slate-700">
+        <div className="flex items-start gap-3.5 mb-4">
           <div className={`p-3 rounded-xl flex-shrink-0 ${danger ? "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400" : "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400"}`}>
             <AlertTriangle size={24} />
           </div>
