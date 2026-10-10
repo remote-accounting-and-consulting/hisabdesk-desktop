@@ -185,8 +185,8 @@ export default function ClientForm() {
             <Field label="Local Level">
               <select value={form.local_level_id} onChange={(e) => handleLocalLevel(e.target.value)} className="input" disabled={!form.district_id}>
                 <option value="">— Select —</option>
-                {localLevels.map((l) => <option key={l.id} value={l.id}>{l.name} ({l.type})</option>)}
-              </select>
+                {localLevels.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </select>
             </Field>
             <Field label="Ward No.">
               <input

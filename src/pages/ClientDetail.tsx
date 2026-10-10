@@ -22,7 +22,7 @@ export default function ClientDetail() {
     const [c] = await db.select<any[]>(
       `SELECT c.*, rt.name as registration_type, bc.name as business_category,
               p.name as province, d.name as district,
-              l.name as local_level, l.type as local_level_type
+              l.name as local_level
        FROM clients c
        LEFT JOIN registration_types rt ON rt.id = c.registration_type_id
        LEFT JOIN business_categories bc ON bc.id = c.business_category_id
@@ -91,7 +91,7 @@ export default function ClientDetail() {
           <InfoRow label="Authorised Person" value={client.authorised_person} />
           <InfoRow label="Contact" value={client.contact_number} />
           <InfoRow label="Email" value={client.email} />
-          <InfoRow label="Address" value={[client.address_line, client.ward_no ? `Ward ${client.ward_no}` : null, client.local_level && client.local_level_type ? `${client.local_level} (${client.local_level_type})` : client.local_level, client.district, client.province].filter(Boolean).join(", ")} />
+          <InfoRow label="Address" value={[client.address_line, client.ward_no ? `Ward ${client.ward_no}` : null, client.local_level, client.district, client.province].filter(Boolean).join(", ")} />
           <InfoRow label="Category" value={client.category === "regular" ? "Regular" : "One-Time"} />
         </Section>
 
