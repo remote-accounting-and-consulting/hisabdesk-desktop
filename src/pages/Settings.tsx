@@ -947,10 +947,10 @@ function AboutTab() {
           <h3 className="font-semibold text-gray-900 dark:text-white">About</h3>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-          HisabDesk is a complete practice management system for accounting
-          firms in Nepal. Manage clients, documents, VAT tracking, work
-          assignments, fees, payments, and reports — all from one desktop
-          application.
+          HisabDesk is a complete practice management system for accounting and
+          consulting firms in Nepal. It provides a simple and organized way to
+          manage clients, documents, VAT tracking, work assignments, fees,
+          payments, and reports — all from one desktop application.
         </p>
       </div>
 
