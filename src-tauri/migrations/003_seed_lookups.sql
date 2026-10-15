@@ -1,3 +1,6 @@
+INSERT INTO branches (name, is_system, sort_order) VALUES
+('Remote Accounting and Consulting Pvt. Ltd.', 1, 1);
+
 INSERT INTO registration_types (name, sort_order) VALUES
 ('Committees',1),('Cooperative',2),('Proprietor',3),('Pvt. Ltd.',4),
 ('Public Limited',5),('NGO/INGO',6),('Education Institution',7),('Other',99);
