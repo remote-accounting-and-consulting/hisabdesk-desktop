@@ -11,6 +11,9 @@ import {
 } from "@tauri-apps/plugin-fs";
 import { appDataDir, appConfigDir } from "@tauri-apps/api/path";
 import { getVersion } from "@tauri-apps/api/app";
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { platform } from "@tauri-apps/plugin-os";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { getDb } from "@/lib/db";
 import {
@@ -1035,60 +1038,142 @@ type UpdatePhase =
 function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
   const [currentVersion, setCurrentVersion] = useState("");
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
-  const [phase, setPhase] = useState<UpdatePhase>("idle");
+  const [currentPlatform, setCurrentPlatform] = useState("");
+  const [phase, setPhase] = useState<
+    "idle" | "checking" | "up-to-date" | "update-available" | "downloading" | "ready" | "error" | "unavailable"
+  >("idle");
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [update, setUpdate] = useState<any>(null);
+  const [pluginReady, setPluginReady] = useState(false);
 
   useEffect(() => {
-    getVersion().then(setCurrentVersion);
+    console.log("[UpdateTab] mounted");
+    (async () => {
+      try {
+        const v = await getVersion();
+        console.log("[UpdateTab] version:", v);
+        setCurrentVersion(v);
+      } catch (e) {
+        console.error("[UpdateTab] getVersion failed:", e);
+        setCurrentVersion("unknown");
+      }
+
+      try {
+        const p = await platform();
+        console.log("[UpdateTab] platform:", p);
+        setCurrentPlatform(p);
+      } catch (e) {
+        console.error("[UpdateTab] platform failed:", e);
+        setCurrentPlatform("unknown");
+      }
+
+      try {
+        const updater = await import("@tauri-apps/plugin-updater");
+        if (typeof updater.check === "function") {
+          console.log("[UpdateTab] updater plugin ready");
+          setPluginReady(true);
+        } else {
+          console.error("[UpdateTab] updater.check is not a function");
+        }
+      } catch (e) {
+        console.error("[UpdateTab] updater import failed:", e);
+      }
+    })();
   }, []);
 
-  // Auto-run check when arriving via "update available" notification
   useEffect(() => {
-    if (autoCheck && currentVersion) {
+    if (autoCheck && currentVersion && pluginReady) {
       checkForUpdates();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoCheck, currentVersion]);
-
-  function compareVersions(a: string, b: string): number {
-    const clean = (v: string) =>
-      v.replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
-    const aParts = clean(a);
-    const bParts = clean(b);
-    const len = Math.max(aParts.length, bParts.length);
-    for (let i = 0; i < len; i++) {
-      const av = aParts[i] || 0;
-      const bv = bParts[i] || 0;
-      if (av > bv) return 1;
-      if (av < bv) return -1;
-    }
-    return 0;
-  }
+  }, [autoCheck, currentVersion, pluginReady]);
 
   async function checkForUpdates() {
     setPhase("checking");
     setError(null);
     try {
-      const res = await fetch(RELEASES_API, {
-        headers: { Accept: "application/vnd.github+json" },
-      });
-      if (!res.ok) throw new Error(`GitHub returned ${res.status}`);
-      const data = await res.json();
-      const tag = (data.tag_name || "").replace(/^v/, "");
-      setLatestVersion(tag);
-
-      if (!tag) {
-        setPhase("error");
-        setError("Could not read version from latest release");
-        return;
+      const { check } = await import("@tauri-apps/plugin-updater");
+      const u = await check();
+      console.log("[UpdateTab] check result:", u);
+      if (u) {
+        setUpdate(u);
+        setLatestVersion(u.version);
+        setPhase("update-available");
+      } else {
+        setPhase("up-to-date");
       }
+    } catch (e) {
+      console.error("[UpdateTab] check failed:", e);
+      setError(String(e));
+      setPhase("error");
+    }
+  }
 
-      const cmp = compareVersions(currentVersion, tag);
-      setPhase(cmp < 0 ? "update-available" : "up-to-date");
+  async function installUpdate() {
+    if (!update) return;
+    setPhase("downloading");
+    setDownloadProgress(0);
+    try {
+      let total = 0;
+      let downloaded = 0;
+      await update.downloadAndInstall((event: any) => {
+        if (event.event === "Started") {
+          total = event.data.contentLength || 0;
+        } else if (event.event === "Progress") {
+          downloaded += event.data.chunkLength || 0;
+          if (total > 0) setDownloadProgress(Math.round((downloaded / total) * 100));
+        } else if (event.event === "Finished") {
+          setPhase("ready");
+        }
+      });
+      setPhase("ready");
     } catch (e) {
       setError(String(e));
       setPhase("error");
     }
+  }
+
+  async function restartApp() {
+    try {
+      const { relaunch } = await import("@tauri-apps/plugin-process");
+      await relaunch();
+    } catch (e) {
+      console.error("[UpdateTab] relaunch failed:", e);
+    }
+  }
+
+  // Fallback when plugin isn't ready
+  if (!pluginReady && currentVersion) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Software Updates
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Auto-updater is not available in this build
+          </p>
+        </div>
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
+          <p className="font-medium text-amber-900 dark:text-amber-300 mb-2">
+            Updater plugin not loaded
+          </p>
+          <p className="text-sm text-amber-800 dark:text-amber-400">
+            Current version: <strong>{currentVersion}</strong> · Platform: <strong>{currentPlatform || "..."}</strong>
+          </p>
+          <p className="text-sm text-amber-800 dark:text-amber-400 mt-3">
+            You can download the latest version manually from GitHub.
+          </p>
+          <button
+            onClick={() => openUrl(RELEASES_PAGE)}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium"
+          >
+            <ExternalLink size={16} /> View Releases on GitHub
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -1133,12 +1218,9 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
 
         {phase === "checking" && (
           <div className="text-center py-2">
-            <Loader2
-              size={24}
-              className="animate-spin text-brand-600 mx-auto mb-2"
-            />
+            <Loader2 size={24} className="animate-spin text-brand-600 mx-auto mb-2" />
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Checking GitHub releases...
+              Checking for updates...
             </p>
           </div>
         )}
@@ -1172,17 +1254,59 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
                 You're on {currentVersion}. Version {latestVersion} is available.
               </p>
             </div>
-            <button
-              onClick={() => openUrl(WEBSITE_URL)}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium"
-            >
-              <Download size={16} /> Download from Website
-            </button>
+            {currentPlatform === "windows" ? (
+              <button
+                onClick={installUpdate}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium"
+              >
+                <Download size={16} /> Download & Install
+              </button>
+            ) : (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm text-amber-900 dark:text-amber-300">
+                Auto-update is only available on Windows. Please download the
+                latest version manually from GitHub.
+              </div>
+            )}
             <button
               onClick={() => openUrl(RELEASES_PAGE)}
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-600"
             >
               <ExternalLink size={16} /> View Latest Release on GitHub
+            </button>
+          </div>
+        )}
+
+        {phase === "downloading" && (
+          <div className="py-2">
+            <p className="font-medium text-gray-900 dark:text-white mb-3 text-center">
+              Downloading update...
+            </p>
+            <div className="w-full h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
+              <div
+                className="h-full bg-brand-500 transition-all duration-300"
+                style={{ width: `${downloadProgress}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              {downloadProgress}%
+            </p>
+          </div>
+        )}
+
+        {phase === "ready" && (
+          <div className="text-center py-2">
+            <CheckCircle2 size={28} className="text-emerald-500 mx-auto mb-2" />
+            <p className="font-medium text-gray-900 dark:text-white">
+              Update installed
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Restart HisabDesk to apply the update.
+            </p>
+            <button
+              onClick={restartApp}
+              className="mt-4 inline-flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium"
+            >
+              <RefreshCcw size={16} /> Restart Now
             </button>
           </div>
         )}
@@ -1193,7 +1317,7 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
             <p className="font-medium text-gray-900 dark:text-white">
               Update Check Failed
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 break-words">
               {error}
             </p>
             <button

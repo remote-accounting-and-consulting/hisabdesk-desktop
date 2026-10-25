@@ -28,7 +28,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": [
+      "nsis"
+    ],
     "publisher": "Remote Accounting and Consulting Pvt. Ltd.",
     "copyright": "\u00a9 2082 Remote Accounting and Consulting Pvt. Ltd.",
     "category": "Business",

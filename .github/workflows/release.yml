@@ -37,7 +37,7 @@ jobs:
             npx tauri icon ./app-icon.png
           fi
 
-      - name: Build and Release with Tauri
+      - name: Build and Release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -48,12 +48,12 @@ jobs:
           releaseName: 'HisabDesk ${{ github.ref_name }}'
           releaseBody: |
             ### HisabDesk
-            
+
             Accounting & Consulting Practice Management System
 
             ### Installation (for Windows)
 
-            1. Download **HisabDesk-Setup.msi** (recommended) or **HisabDesk-Setup.exe** from the assets below
+            1. Download **HisabDesk-Setup.exe** from the assets below
             2. Double-click the downloaded file to install
             3. Launch **HisabDesk** from the Start menu
           releaseDraft: false
