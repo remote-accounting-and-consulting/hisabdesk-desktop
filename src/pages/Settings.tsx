@@ -29,6 +29,7 @@ type Tab =
   | "regtypes"
   | "bizcats"
   | "doctypes"
+  | "branches"
   | "about"
   | "update";
 
