@@ -33,20 +33,30 @@
     "copyright": "\u00a9 2082 Remote Accounting and Consulting Pvt. Ltd.",
     "category": "Business",
     "shortDescription": "Accounting & Consulting Practice Management System",
-    "longDescription": "HisabDesk is a complete practice management system for accounting and consulting firms in Nepal. It provides a simple and organized way to manage clients, documents, VAT tracking, work assignments, fees, payments, and reports — all from one desktop application.",
+    "longDescription": "HisabDesk is a complete practice management system for accounting and consulting firms in Nepal. It provides a simple and organized way to manage clients, documents, VAT tracking, work assignments, fees, payments, and reports \u2014 all from one desktop application.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
   },
   "plugins": {
     "sql": {
       "preload": [
         "sqlite:hisabdesk.db"
       ]
+    },
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVDRjNGQ0Q0MDU2QjM3QUEKUldTcU4yc0YxUHp6WExoeUNPZmpUa0ttc0NYcVJxdnN5RGNDYXArWFNtc20vK0hTd0xhR3puaUwK",
+      "endpoints": [
+        "https://github.com/remote-accounting-and-consulting/hisabdesk-desktop/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

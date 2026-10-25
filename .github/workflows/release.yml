@@ -68,6 +68,9 @@ jobs:
           files: |
             src-tauri/target/release/bundle/msi/HisabDesk-Setup.msi
             src-tauri/target/release/bundle/nsis/HisabDesk-Setup.exe
+            src-tauri/target/release/bundle/nsis/HisabDesk-Setup.nsis.zip
+            src-tauri/target/release/bundle/nsis/HisabDesk-Setup.nsis.zip.sig
+            src-tauri/target/release/bundle/nsis/latest.json
           draft: false
           prerelease: false
         env:

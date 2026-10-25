@@ -13,8 +13,9 @@ export default function ClientForm() {
   const [localLevels, setLocalLevels] = useState<any[]>([]);
   const [regTypes, setRegTypes] = useState<any[]>([]);
   const [bizCats, setBizCats] = useState<any[]>([]);
+  const [branches, setBranches] = useState<any[]>([]);
   const [form, setForm] = useState({
-    name: "", pan_no: "", registration_type_id: "", business_category_id: "",
+    name: "", branch_id: "", pan_no: "", registration_type_id: "", business_category_id: "",
     category: "one_time", registration_date: new Date().toISOString().slice(0, 10),
     authorised_person: "", contact_number: "", email: "",
     province_id: "", district_id: "", local_level_id: "", ward_no: "",
@@ -28,12 +29,19 @@ export default function ClientForm() {
       setProvinces(await getProvinces());
       const db = await getDb();
       setRegTypes(await db.select<any[]>("SELECT id, name FROM registration_types WHERE active=1 ORDER BY sort_order"));
+      const branchList = await db.select<any[]>("SELECT id, name, is_system FROM branches WHERE active=1 ORDER BY sort_order, name");
+      setBranches(branchList);
+
+      if (!isEdit && branchList.length > 0) {
+        const defaultBranch = branchList.find((b: any) => b.is_system === 1) || branchList[0];
+        setForm((f) => ({ ...f, branch_id: String(defaultBranch.id) }));
+      }
       setBizCats(await db.select<any[]>("SELECT id, name FROM business_categories WHERE active=1 ORDER BY sort_order"));
       if (isEdit) {
         const [c] = await db.select<any[]>("SELECT * FROM clients WHERE id=?", [id]);
         if (c) {
           setForm({
-            name: c.name || "", pan_no: c.pan_no || "",
+            name: c.name || "", branch_id: String(c.branch_id || ""), pan_no: c.pan_no || "",
             registration_type_id: String(c.registration_type_id || ""),
             business_category_id: String(c.business_category_id || ""),
             category: c.category || "one_time",
@@ -77,6 +85,7 @@ export default function ClientForm() {
       const db = await getDb();
       const payload = {
         name: form.name,
+        branch_id: form.branch_id ? Number(form.branch_id) : null,
         pan_no: form.pan_no || null,
         registration_type_id: form.registration_type_id ? Number(form.registration_type_id) : null,
         business_category_id: form.business_category_id ? Number(form.business_category_id) : null,
@@ -95,8 +104,8 @@ export default function ClientForm() {
 
       if (isEdit) {
         await db.execute(
-          `UPDATE clients SET name=?, pan_no=?, registration_type_id=?, business_category_id=?, category=?, registration_date=?, authorised_person=?, contact_number=?, email=?, province_id=?, district_id=?, local_level_id=?, ward_no=?, address_line=?, remarks=?, updated_at=datetime('now') WHERE id=?`,
-          [...Object.values(payload), id]
+          `UPDATE clients SET name=?, branch_id=?, pan_no=?, registration_type_id=?, business_category_id=?, category=?, registration_date=?, authorised_person=?, contact_number=?, email=?, province_id=?, district_id=?, local_level_id=?, ward_no=?, address_line=?, remarks=?, updated_at=datetime('now') WHERE id=?`,
+          [payload.name, payload.branch_id, payload.pan_no, payload.registration_type_id, payload.business_category_id, payload.category, payload.registration_date, payload.authorised_person, payload.contact_number, payload.email, payload.province_id, payload.district_id, payload.local_level_id, payload.ward_no, payload.address_line, payload.remarks, id]
         );
         await logAudit("update_client", "client", Number(id), { name: form.name });
         if (form.category === "regular") await generateRecurringWork(Number(id));
@@ -110,8 +119,8 @@ export default function ClientForm() {
         }
         const code = `CL${String(next).padStart(4, "0")}`;
         const result = await db.execute(
-          `INSERT INTO clients (client_code, name, pan_no, registration_type_id, business_category_id, category, registration_date, authorised_person, contact_number, email, province_id, district_id, local_level_id, ward_no, address_line, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [code, ...Object.values(payload)]
+          `INSERT INTO clients (client_code, name, branch_id, pan_no, registration_type_id, business_category_id, category, registration_date, authorised_person, contact_number, email, province_id, district_id, local_level_id, ward_no, address_line, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [code, payload.name, payload.branch_id, payload.pan_no, payload.registration_type_id, payload.business_category_id, payload.category, payload.registration_date, payload.authorised_person, payload.contact_number, payload.email, payload.province_id, payload.district_id, payload.local_level_id, payload.ward_no, payload.address_line, payload.remarks]
         );
         const newId = Number((result as any).lastInsertId);
         await logAudit("create_client", "client", newId, { name: form.name, code });
@@ -135,6 +144,14 @@ export default function ClientForm() {
           <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Client Name *"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input" /></Field>
+            <Field label="Branch">
+              <select value={form.branch_id} onChange={(e) => setForm({ ...form, branch_id: e.target.value })} className="input">
+                <option value="">— Select Branch —</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </Field>
             <Field label="PAN No."><input value={form.pan_no} onChange={(e) => setForm({ ...form, pan_no: e.target.value })} className="input" /></Field>
             <Field label="Registration Type">
               <select value={form.registration_type_id} onChange={(e) => setForm({ ...form, registration_type_id: e.target.value })} className="input">

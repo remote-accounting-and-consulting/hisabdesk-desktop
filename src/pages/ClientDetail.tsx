@@ -22,13 +22,14 @@ export default function ClientDetail() {
     const [c] = await db.select<any[]>(
       `SELECT c.*, rt.name as registration_type, bc.name as business_category,
               p.name as province, d.name as district,
-              l.name as local_level
+              l.name as local_level, b.name as branch_name
        FROM clients c
        LEFT JOIN registration_types rt ON rt.id = c.registration_type_id
        LEFT JOIN business_categories bc ON bc.id = c.business_category_id
        LEFT JOIN provinces p ON p.id = c.province_id
        LEFT JOIN districts d ON d.id = c.district_id
        LEFT JOIN local_levels l ON l.id = c.local_level_id
+       LEFT JOIN branches b ON b.id = c.branch_id
        WHERE c.id = ?`, [id]);
     setClient(c);
 
@@ -87,12 +88,30 @@ export default function ClientDetail() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Section title="Client Information">
-          <InfoRow label="PAN" value={client.pan_no} />
+          <InfoRow label="Client Code" value={client.client_code} />
+          <InfoRow label="Client Name" value={client.name} />
+          <InfoRow label="Branch" value={client.branch_name} />
+          <InfoRow label="PAN No." value={client.pan_no} />
+          <InfoRow label="Registration Type" value={client.registration_type} />
+          <InfoRow label="Nature of Business" value={client.business_category} />
+          <InfoRow label="Category" value={client.category === "regular" ? "Regular" : "One-Time"} />
+          <InfoRow label="Registration Date" value={client.registration_date} />
           <InfoRow label="Authorised Person" value={client.authorised_person} />
           <InfoRow label="Contact" value={client.contact_number} />
           <InfoRow label="Email" value={client.email} />
-          <InfoRow label="Address" value={[client.address_line, client.ward_no ? `Ward ${client.ward_no}` : null, client.local_level, client.district, client.province].filter(Boolean).join(", ")} />
-          <InfoRow label="Category" value={client.category === "regular" ? "Regular" : "One-Time"} />
+          <InfoRow
+            label="Address"
+            value={[
+              client.address_line,
+              client.ward_no ? `Ward ${client.ward_no}` : null,
+              client.local_level,
+              client.district,
+              client.province,
+            ]
+              .filter(Boolean)
+              .join(", ")}
+          />
+          <InfoRow label="Remarks" value={client.remarks} />
         </Section>
 
         <Section title="Documents">

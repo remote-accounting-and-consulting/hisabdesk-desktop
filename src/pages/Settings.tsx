@@ -88,6 +88,7 @@ export default function Settings() {
         <div className="flex bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-1">
           {(
             [
+              ["branches", "Branches"],
               ["services", "Services"],
               ["regtypes", "Registration"],
               ["bizcats", "Business"],
@@ -144,6 +145,7 @@ export default function Settings() {
       {tab === "doctypes" && (
         <ListEditor table="document_types" title="Document Types" />
       )}
+      {tab === "branches" && <ListEditor table="branches" title="Branches" />}
       {tab === "about" && <AboutTab />}
       {tab === "update" && <UpdateTab autoCheck={autoCheck} />}
     </div>
