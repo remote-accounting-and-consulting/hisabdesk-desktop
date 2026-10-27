@@ -53,7 +53,7 @@ jobs:
 
             ### Installation (for Windows)
 
-            1. Download **HisabDesk-Setup.exe** from the assets below
+            1. Download the `.exe` file from the assets below
             2. Double-click the downloaded file to install
             3. Launch **HisabDesk** from the Start menu
           releaseDraft: false

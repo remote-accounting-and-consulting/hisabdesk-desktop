@@ -1,6 +1,6 @@
 [package]
 name = "hisabdesk"
-version = "1.0.0"
+version = "v1.0.1"
 description = "HisabDesk - Accounting Consulting Practice Management System"
 authors = ["Remote Accounting and Consulting Pvt. Ltd."]
 edition = "2021"
