@@ -1,6 +1,10 @@
 #!/bin/bash
 V=$1
-if [ -z "$V" ]; then echo "Usage: ./make-version.sh 1.0.0"; exit 1; fi
+if [ -z "$V" ]; then echo "Usage: ./make-version.sh 1.0.2"; exit 1; fi
+
+# Strip "v" prefix if present — Cargo doesn't accept it
+V="${V#v}"
+
 python3 << PYEOF
 import json, re
 V = "$V"
@@ -13,6 +17,7 @@ c = re.sub(r'^version = "[\d\.]+"', f'version = "{V}"', c, count=1, flags=re.MUL
 with open("src-tauri/Cargo.toml", "w") as f: f.write(c)
 print(f"✅ All version files set to {V}")
 PYEOF
+
 git add -A
 git commit -m "chore: release v$V"
 git push origin main
