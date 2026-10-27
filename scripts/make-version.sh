@@ -1,6 +1,6 @@
 #!/bin/bash
 V=$1
-if [ -z "$V" ]; then echo "Usage: ./make-version.sh 1.0.2"; exit 1; fi
+if [ -z "$V" ]; then echo "Usage: ./make-version.sh 1.0.0"; exit 1; fi
 
 # Strip "v" prefix if present — Cargo doesn't accept it
 V="${V#v}"

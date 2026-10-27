@@ -1022,25 +1022,22 @@ function InfoCard({
 /* =============================================================== */
 
 const GITHUB_REPO = "remote-accounting-and-consulting/hisabdesk-desktop";
-const RELEASES_API = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 const RELEASES_PAGE = `https://github.com/${GITHUB_REPO}/releases`;
-const MSI_DOWNLOAD = `https://github.com/${GITHUB_REPO}/releases/latest/download/HisabDesk-Setup.msi`;
-const WEBSITE_URL =
-  "https://remote-accounting-and-consulting.github.io/hisabdesk-website/";
-
-type UpdatePhase =
-  | "idle"
-  | "checking"
-  | "up-to-date"
-  | "update-available"
-  | "error";
+const LATEST_RELEASE_PAGE = `https://github.com/${GITHUB_REPO}/releases/latest`;
 
 function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
   const [currentVersion, setCurrentVersion] = useState("");
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
   const [currentPlatform, setCurrentPlatform] = useState("");
   const [phase, setPhase] = useState<
-    "idle" | "checking" | "up-to-date" | "update-available" | "downloading" | "ready" | "error" | "unavailable"
+    | "idle"
+    | "checking"
+    | "up-to-date"
+    | "update-available"
+    | "downloading"
+    | "ready"
+    | "error"
+    | "unavailable"
   >("idle");
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -1048,36 +1045,22 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
   const [pluginReady, setPluginReady] = useState(false);
 
   useEffect(() => {
-    console.log("[UpdateTab] mounted");
     (async () => {
       try {
-        const v = await getVersion();
-        console.log("[UpdateTab] version:", v);
-        setCurrentVersion(v);
-      } catch (e) {
-        console.error("[UpdateTab] getVersion failed:", e);
+        setCurrentVersion(await getVersion());
+      } catch {
         setCurrentVersion("unknown");
       }
-
       try {
-        const p = await platform();
-        console.log("[UpdateTab] platform:", p);
-        setCurrentPlatform(p);
-      } catch (e) {
-        console.error("[UpdateTab] platform failed:", e);
+        setCurrentPlatform(await platform());
+      } catch {
         setCurrentPlatform("unknown");
       }
-
       try {
         const updater = await import("@tauri-apps/plugin-updater");
-        if (typeof updater.check === "function") {
-          console.log("[UpdateTab] updater plugin ready");
-          setPluginReady(true);
-        } else {
-          console.error("[UpdateTab] updater.check is not a function");
-        }
-      } catch (e) {
-        console.error("[UpdateTab] updater import failed:", e);
+        setPluginReady(typeof updater.check === "function");
+      } catch {
+        setPluginReady(false);
       }
     })();
   }, []);
@@ -1089,13 +1072,25 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoCheck, currentVersion, pluginReady]);
 
+  function compareVersions(a: string, b: string): number {
+    const clean = (v: string) =>
+      v.replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
+    const ap = clean(a);
+    const bp = clean(b);
+    const len = Math.max(ap.length, bp.length);
+    for (let i = 0; i < len; i++) {
+      if ((ap[i] || 0) > (bp[i] || 0)) return 1;
+      if ((ap[i] || 0) < (bp[i] || 0)) return -1;
+    }
+    return 0;
+  }
+
   async function checkForUpdates() {
     setPhase("checking");
     setError(null);
     try {
       const { check } = await import("@tauri-apps/plugin-updater");
       const u = await check();
-      console.log("[UpdateTab] check result:", u);
       if (u) {
         setUpdate(u);
         setLatestVersion(u.version);
@@ -1104,8 +1099,37 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
         setPhase("up-to-date");
       }
     } catch (e) {
-      console.error("[UpdateTab] check failed:", e);
-      setError(String(e));
+      const msg = String(e);
+      console.error("Update check failed:", msg);
+
+      // Platform not available — fetch version manually
+      if (
+        msg.includes("None of the fallback platforms") ||
+        msg.includes("platforms") ||
+        msg.includes("platform")
+      ) {
+        try {
+          const { fetch: tauriFetch } = await import("@tauri-apps/plugin-http");
+          const res = await tauriFetch(
+            `https://github.com/remote-accounting-and-consulting/hisabdesk-desktop/releases/latest/download/latest.json`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (data.version) {
+              setLatestVersion(data.version);
+              const cmp = compareVersions(currentVersion, data.version);
+              setPhase(cmp < 0 ? "unavailable" : "up-to-date");
+              return;
+            }
+          }
+        } catch (fetchErr) {
+          console.error("Manual version fetch failed:", fetchErr);
+        }
+        setPhase("unavailable");
+        return;
+      }
+
+      setError(msg);
       setPhase("error");
     }
   }
@@ -1139,11 +1163,11 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
       const { relaunch } = await import("@tauri-apps/plugin-process");
       await relaunch();
     } catch (e) {
-      console.error("[UpdateTab] relaunch failed:", e);
+      console.error("Relaunch failed:", e);
     }
   }
 
-  // Fallback when plugin isn't ready
+  /* ---------- FALLBACK: plugin not loaded ---------- */
   if (!pluginReady && currentVersion) {
     return (
       <div className="space-y-6">
@@ -1160,10 +1184,11 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
             Updater plugin not loaded
           </p>
           <p className="text-sm text-amber-800 dark:text-amber-400">
-            Current version: <strong>{currentVersion}</strong> · Platform: <strong>{currentPlatform || "..."}</strong>
+            Current version: <strong>{currentVersion}</strong> · Platform:{" "}
+            <strong>{currentPlatform || "..."}</strong>
           </p>
           <p className="text-sm text-amber-800 dark:text-amber-400 mt-3">
-            You can download the latest version manually from GitHub.
+            Download the latest version manually from GitHub.
           </p>
           <button
             onClick={() => openUrl(RELEASES_PAGE)}
@@ -1176,6 +1201,7 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
     );
   }
 
+  /* ---------- MAIN UI ---------- */
   return (
     <div className="space-y-6">
       <div>
@@ -1188,6 +1214,7 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+        {/* Version row */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -1202,11 +1229,17 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
               Latest Version
             </div>
             <div className="text-2xl font-semibold text-gray-900 dark:text-white font-mono mt-1">
-              {latestVersion || (phase === "checking" ? "..." : "—")}
+              {latestVersion ||
+                (phase === "checking"
+                  ? "..."
+                  : phase === "up-to-date"
+                  ? currentVersion
+                  : "—")}
             </div>
           </div>
         </div>
 
+        {/* Idle */}
         {phase === "idle" && (
           <button
             onClick={checkForUpdates}
@@ -1216,6 +1249,7 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
           </button>
         )}
 
+        {/* Checking */}
         {phase === "checking" && (
           <div className="text-center py-2">
             <Loader2 size={24} className="animate-spin text-brand-600 mx-auto mb-2" />
@@ -1225,11 +1259,12 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
           </div>
         )}
 
+        {/* Up to date */}
         {phase === "up-to-date" && (
           <div className="text-center py-2">
             <CheckCircle2 size={28} className="text-emerald-500 mx-auto mb-2" />
             <p className="font-medium text-gray-900 dark:text-white">
-              You're up to date
+              You&apos;re up to date
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               HisabDesk {currentVersion} is the latest version.
@@ -1243,6 +1278,7 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
           </div>
         )}
 
+        {/* Update available — Windows */}
         {phase === "update-available" && (
           <div className="space-y-3">
             <div className="text-center py-2">
@@ -1251,31 +1287,49 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
                 A newer version is available
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                You're on {currentVersion}. Version {latestVersion} is available.
+                You&apos;re on {currentVersion}. Version {latestVersion} is available.
               </p>
             </div>
-            {currentPlatform === "windows" ? (
-              <button
-                onClick={installUpdate}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium"
-              >
-                <Download size={16} /> Download & Install
-              </button>
-            ) : (
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm text-amber-900 dark:text-amber-300">
-                Auto-update is only available on Windows. Please download the
-                latest version manually from GitHub.
-              </div>
-            )}
             <button
-              onClick={() => openUrl(RELEASES_PAGE)}
+              onClick={installUpdate}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium"
+            >
+              <Download size={16} /> Download &amp; Install
+            </button>
+            <button
+              onClick={() => openUrl(LATEST_RELEASE_PAGE)}
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-600"
             >
-              <ExternalLink size={16} /> View Latest Release on GitHub
+              <ExternalLink size={16} /> View latest release on GitHub
             </button>
           </div>
         )}
 
+        {/* Update available — non-Windows (unavailable) */}
+        {phase === "unavailable" && (
+          <div className="space-y-3">
+            <div className="text-center py-2">
+              <Download size={28} className="text-brand-600 mx-auto mb-2" />
+              <p className="font-medium text-gray-900 dark:text-white">
+                A newer version is available
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                You&apos;re on {currentVersion}. Version {latestVersion} is available.
+              </p>
+            </div>
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm text-amber-900 dark:text-amber-300">
+              Built-in update is not available on this platform.
+            </div>
+            <button
+              onClick={() => openUrl(LATEST_RELEASE_PAGE)}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-600"
+            >
+              <ExternalLink size={16} /> View latest release on GitHub
+            </button>
+          </div>
+        )}
+
+        {/* Downloading */}
         {phase === "downloading" && (
           <div className="py-2">
             <p className="font-medium text-gray-900 dark:text-white mb-3 text-center">
@@ -1293,6 +1347,7 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
           </div>
         )}
 
+        {/* Ready to restart */}
         {phase === "ready" && (
           <div className="text-center py-2">
             <CheckCircle2 size={28} className="text-emerald-500 mx-auto mb-2" />
@@ -1311,6 +1366,7 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
           </div>
         )}
 
+        {/* Error */}
         {phase === "error" && (
           <div className="text-center py-2">
             <AlertCircle size={28} className="text-red-500 mx-auto mb-2" />
@@ -1330,6 +1386,7 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
         )}
       </div>
 
+      {/* Bottom link */}
       <div className="flex items-center gap-4 text-sm">
         <button
           onClick={() => openUrl(RELEASES_PAGE)}
@@ -1341,3 +1398,4 @@ function UpdateTab({ autoCheck = false }: { autoCheck?: boolean }) {
     </div>
   );
 }
+

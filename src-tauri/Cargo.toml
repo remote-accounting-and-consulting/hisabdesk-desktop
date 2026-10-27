@@ -1,6 +1,6 @@
 [package]
 name = "hisabdesk"
-version = "2.0.0"
+version = "1.0.0"
 description = "HisabDesk - Accounting Consulting Practice Management System"
 authors = ["Remote Accounting and Consulting Pvt. Ltd."]
 edition = "2021"
@@ -22,6 +22,7 @@ tauri-plugin-shell = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
+tauri-plugin-http = "2"
 tauri-plugin-os = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
