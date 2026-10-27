@@ -58,3 +58,4 @@ jobs:
             3. Launch **HisabDesk** from the Start menu
           releaseDraft: false
           prerelease: false
+          assetNamePattern: 'HisabDesk-Setup[ext]'
